@@ -8,76 +8,86 @@
   <title>Supermarket App</title>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/">Supermarket App</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="collapsibleNavbar">
-          <ul class="navbar-nav">
+  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Supermarket App</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="collapsibleNavbar">
+        <ul class="navbar-nav">
+          <% if (user) { %>
             <li class="nav-item">
               <a class="nav-link" href="/cart">View Cart</a>
-            </li> 
+            </li>
             <li class="nav-item">
               <a class="nav-link" href="/logout">Logout</a>
-            </li> 
-          </ul>
-        </div>
+            </li>
+          <% } else { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/login">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/register">Register</a>
+            </li>
+          <% } %>
+        </ul>
       </div>
-    </nav>
+    </div>
+  </nav>
 
   <div class="container">
-    <p>Welcome, <%= user.username %> (<%= user.role %>)</p>
+    <% if (user) { %>
+      <p>Welcome, <%= user.username %> (<%= user.role %>)</p>
+    <% } else { %>
+      <p>Welcome, Guest</p>
+    <% } %>
     <br>
+
     <div class="text-center"><h2>Products from Supermarket</h2></div>
     <br>
+
     <table class="table table-hover small text-center">
       <thead>
-          <tr>
-            <th width="100">Product Name</th>
-            <th width="100">Product Image</th>
-            <th width="50">Quantity</th>
-            <th width="50">Price</th>
-            <th width="50">Quantity</th>
-            <th width="50">Buy</th>
-          </tr>
+        <tr>
+          <th>Product Name</th>
+          <th>Product Image</th>
+          <th>Quantity</th>
+          <th>Price</th>
+          <th>Buy Quantity</th>
+          <th>Buy</th>
+        </tr>
       </thead>
       <tbody>
-        <% for(let i=0; i < products.length; i++) { %>
+        <% products.forEach(product => { %>
           <tr>
-            <td><a href="/product/<%= products[i].id %>" ><%= products[i].productName %></a></td>
-            <td><img src = "images/<%= products[i].image %>" width="20%"></td>
-            <td><%= products[i].quantity %></td>
-            <td>$<%= products[i].price.toFixed(2) %></td>
-            <!-- <td>
-              <select id="role" name="role" class="form-control" >
-                <option value="1" selected >1</option>
-                <option value="2" >2</option>
-                <option value="3" >3</option>
-                <option value="4" >4</option>
-                <option value="5" >5</option>
-              </select>
-            </td> -->
-            <!-- Buy Link -->
-            <!-- <td><a href="/buyProduct/<%#= products[i].id %>" class="btn btn-primary mt-3">Buy</a></td> -->
+            <td><a href="/product/<%= product.id %>"><%= product.productName %></a></td>
+            <td><img src="images/<%= product.image %>" width="20%"></td>
+            <td><%= product.quantity %></td>
+            <td>$<%= product.price.toFixed(2) %></td>
             <td>
-              <select class="form-control" onchange="document.getElementById('quantity-<%= products[i].id %>').value = this.value">
-                <% for (let q = 1; q <= 5; q++) { %>
-                  <option value="<%= q %>"><%= q %></option>
-                <% } %>
-              </select>
+              <% if (user) { %>
+                <select class="form-control" onchange="document.getElementById('quantity-<%= product.id %>').value = this.value">
+                  <% for (let q = 1; q <= 5; q++) { %>
+                    <option value="<%= q %>"><%= q %></option>
+                  <% } %>
+                </select>
+              <% } else { %>
+                <span>-</span>
+              <% } %>
             </td>
-
             <td>
-                <form action="/add-to-cart/<%= products[i].id %>" method="POST">
-                  <input type="hidden" name="quantity" id="quantity-<%= products[i].id %>" value="1">
-                  <button type="submit" class="btn btn-primary mt-3">Buy</button>
+              <% if (user) { %>
+                <form action="/add-to-cart/<%= product.id %>" method="POST">
+                  <input type="hidden" name="quantity" id="quantity-<%= product.id %>" value="1">
+                  <button type="submit" class="btn btn-primary mt-1">Buy</button>
                 </form>
+              <% } else { %>
+                <a href="/login" class="btn btn-secondary mt-1">Login to Buy</a>
+              <% } %>
             </td>
-
           </tr>
-        <% } %>
+        <% }) %>
       </tbody>
     </table>
   </div>
