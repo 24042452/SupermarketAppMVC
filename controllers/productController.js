@@ -8,11 +8,16 @@ const showAllProducts = (req, res) => {
             return res.status(500).send('Error retrieving products');
         }
 
-        // Determine which page to render based on role
+        // Admin sees inventory page
         if (req.session && req.session.user && req.session.user.role === 'admin') {
             res.render('inventory', { products: results, user: req.session.user });
         } else {
-            res.render('shopping', { products: results, user: req.session.user || null });
+            // Regular users see shopping page
+            res.render('shopping', { 
+                products: results, 
+                user: req.session.user || null,
+                cart: req.session.cart || []  // Pass cart for navbar dropdown
+            });
         }
     });
 };
