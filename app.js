@@ -82,5 +82,51 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
+const orderController = require('./controllers/orderController');
+
+// View cart
+app.get('/cart', orderController.viewCart);
+
+// Add to cart
+app.post('/add-to-cart/:id', (req, res) => {
+    const productId = req.params.id;
+    const quantity = parseInt(req.body.quantity) || 1;
+
+    if (!req.session.cart) {
+        req.session.cart = [];
+    }
+
+    const existingItemIndex = req.session.cart.findIndex(item => item.productId == productId);
+    if (existingItemIndex > -1) {
+        req.session.cart[existingItemIndex].quantity += quantity;
+    } else {
+        // You need product details to push into cart
+        const ProductModel = require('./models/productModel');
+        ProductModel.getProductById(productId, (err, results) => {
+            if (err || results.length === 0) return res.redirect('/shopping');
+            const product = results[0];
+            req.session.cart.push({
+                productId: product.id,
+                productName: product.productName,
+                price: product.price,
+                quantity: quantity
+            });
+            return res.redirect('/');
+        });
+        return;
+    }
+
+    res.redirect('/shopping');
+});
+
+
+// Checkout
+app.post('/checkout', orderController.checkout);
+
+// Orders
+app.get('/orders', orderController.showOrders);
+app.get('/orders/:id', orderController.showOrderDetails);
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
