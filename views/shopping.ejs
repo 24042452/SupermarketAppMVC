@@ -98,49 +98,7 @@
   </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="/">Supermarket App</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="collapsibleNavbar">
-        <ul class="navbar-nav ms-auto align-items-center">
-          <% if (user) { %>
-            <li class="nav-item me-3 text-white">
-              Hello, <%= user.username %>
-            </li>
-            <li class="nav-item dropdown cart position-relative me-3">
-              <a class="nav-link" href="/cart"><i class="bi bi-cart3"></i> Cart (<%= cart ? cart.length : 0 %>)</a>
-              <div class="cart-dropdown">
-                <% if (!cart || cart.length === 0) { %>
-                  <p class="mb-0 text-muted">Your cart is empty.</p>
-                <% } else { %>
-                  <% cart.forEach(item => { %>
-                    <div class="d-flex justify-content-between mb-1">
-                      <span class="fw-medium"><%= item.productName %> x <%= item.quantity %></span>
-                      <span class="fw-bold text-success">$<%= (item.price * item.quantity).toFixed(2) %></span>
-                    </div>
-                  <% }) %>
-                <% } %>
-              </div>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/logout">Logout</a>
-            </li>
-          <% } else { %>
-            <li class="nav-item">
-              <a class="nav-link" href="/login">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/register">Register</a>
-            </li>
-          <% } %>
-        </ul>
-      </div>
-    </div>
-  </nav>
+  <%- include('partials/navbar', { user: user, cart: cart }) %>
 
   <div class="container my-5 px-3">
     <h2 class="text-center fw-bold mb-5" style="letter-spacing:.01em;">Products</h2>

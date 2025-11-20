@@ -68,14 +68,27 @@ app.post('/updateProduct/:id', checkAuthenticated, checkAdmin, upload.single('im
 app.get('/deleteProduct/:id', checkAuthenticated, checkAdmin, ProductController.deleteProduct);
 
 app.get('/register', (req, res) => {
-    res.render('register', { messages: req.flash('error'), formData: req.flash('formData')[0] });
+    res.render('register', { 
+        user: req.session.user || null,
+        cart: req.session.cart || [],
+        messages: req.flash('error'),
+        formData: req.flash('formData')[0]
+    });
 });
+
 app.post('/register', UserController.registerUser);
 
 app.get('/login', (req, res) => {
-    res.render('login', { messages: req.flash('success'), errors: req.flash('error') });
+    res.render('login', { 
+        user: req.session.user || null,
+        cart: req.session.cart || [],
+        messages: req.flash('success'),
+        errors: req.flash('error')
+    });
 });
+
 app.post('/login', UserController.loginUser);
+
 
 app.get('/logout', (req, res) => {
     req.session.destroy();
