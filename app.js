@@ -6,67 +6,52 @@ const app = express();
 
 // File upload setup
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'public/images');
-    },
-    filename: (req, file, cb) => {
-        cb(null, file.originalname);
-    }
+    destination: (req, file, cb) => cb(null, 'public/images'),
+    filename: (req, file, cb) => cb(null, file.originalname)
 });
 const upload = multer({ storage: storage });
 
 // Controllers
 const ProductController = require('./controllers/productController');
 const UserController = require('./controllers/userController');
+const orderController = require('./controllers/orderController');
 
-// Set up view engine
+// Middleware
+const { checkAuthenticated, checkAdmin } = require('./middlewares/middleware');
+
+// View engine
 app.set('view engine', 'ejs');
 
-// Enable static files
+// Static files & form parsing
 app.use(express.static('public'));
-
-// Enable form processing
 app.use(express.urlencoded({ extended: false }));
 
-// Session & flash middleware
+// Session & flash
 app.use(session({
     secret: 'secret',
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 } // 1 week
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
 app.use(flash());
 
-// Middleware for authentication
-const checkAuthenticated = (req, res, next) => {
-    if (req.session && req.session.user) {
-        return next();
-    }
-    res.redirect('/login');
-};
+// --- ROUTES ---
 
-// Middleware for admin-only routes
-const checkAdmin = (req, res, next) => {
-    if (req.session && req.session.user && req.session.user.role === 'admin') {
-        return next();
-    }
-    res.redirect('/');
-};
-
-// Routes
+// Home & product details
 app.get('/', ProductController.showAllProducts);
 app.get('/product/:id', ProductController.showProductById);
 
+// Admin-only routes
 app.get('/inventory', checkAuthenticated, checkAdmin, ProductController.showAllProducts);
 app.get('/addProduct', checkAuthenticated, checkAdmin, (req, res) => {
     res.render('addProduct', { user: req.session.user });
 });
 app.post('/addProduct', checkAuthenticated, checkAdmin, upload.single('image'), ProductController.addProduct);
-
 app.get('/updateProduct/:id', checkAuthenticated, checkAdmin, ProductController.editProductForm);
 app.post('/updateProduct/:id', checkAuthenticated, checkAdmin, upload.single('image'), ProductController.updateProduct);
 app.get('/deleteProduct/:id', checkAuthenticated, checkAdmin, ProductController.deleteProduct);
 
+// User auth
 app.get('/register', (req, res) => {
     res.render('register', { 
         user: req.session.user || null,
@@ -75,7 +60,6 @@ app.get('/register', (req, res) => {
         formData: req.flash('formData')[0]
     });
 });
-
 app.post('/register', UserController.registerUser);
 
 app.get('/login', (req, res) => {
@@ -86,52 +70,59 @@ app.get('/login', (req, res) => {
         errors: req.flash('error')
     });
 });
-
 app.post('/login', UserController.loginUser);
-
 
 app.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/');
 });
 
-const orderController = require('./controllers/orderController');
-
-// View cart
+// --- CART ROUTES ---
 app.get('/cart', orderController.viewCart);
 
-// Add to cart
+// Add to cart (redirect stays same)
 app.post('/add-to-cart/:id', (req, res) => {
     const productId = req.params.id;
     const quantity = parseInt(req.body.quantity) || 1;
 
-    if (!req.session.cart) {
-        req.session.cart = [];
-    }
+    if (!req.session.cart) req.session.cart = [];
 
-    const existingItemIndex = req.session.cart.findIndex(item => item.productId == productId);
-    if (existingItemIndex > -1) {
-        req.session.cart[existingItemIndex].quantity += quantity;
+    const existingIndex = req.session.cart.findIndex(item => item.productId == productId);
+    if (existingIndex > -1) {
+        req.session.cart[existingIndex].quantity += quantity;
     } else {
-        // You need product details to push into cart
         const ProductModel = require('./models/productModel');
         ProductModel.getProductById(productId, (err, results) => {
-            if (err || results.length === 0) return res.redirect('/shopping');
+            if (err || results.length === 0) return res.redirect('back');
             const product = results[0];
             req.session.cart.push({
                 productId: product.id,
                 productName: product.productName,
+                productImage: product.image || 'placeholder.png',
                 price: product.price,
                 quantity: quantity
             });
-            return res.redirect('/');
+            return res.redirect('back');
         });
         return;
     }
-
-    res.redirect('/shopping');
+    res.redirect('back');
 });
 
+// Remove single cart item
+app.post('/cart/remove/:id', (req, res) => {
+    const productId = req.params.id;
+    if (req.session.cart) {
+        req.session.cart = req.session.cart.filter(item => item.productId != productId);
+    }
+    res.redirect('/cart');
+});
+
+// Clear entire cart
+app.post('/cart/clear', (req, res) => {
+    req.session.cart = [];
+    res.redirect('/cart');
+});
 
 // Checkout
 app.post('/checkout', orderController.checkout);
@@ -140,6 +131,6 @@ app.post('/checkout', orderController.checkout);
 app.get('/orders', orderController.showOrders);
 app.get('/orders/:id', orderController.showOrderDetails);
 
-
+// Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
