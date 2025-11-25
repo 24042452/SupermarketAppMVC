@@ -44,6 +44,8 @@ app.use(flash());
 app.get('/', ProductController.showAllProducts);
 app.get('/product/:id', ProductController.showProductById);
 app.post('/product/:id/review', checkAuthenticated, ProductController.addReview);
+app.post('/reviews/:id/delete', checkAuthenticated, checkAdmin, ProductController.deleteReview);
+app.post('/reviews/:id/reply', checkAuthenticated, checkAdmin, ProductController.replyReview);
 
 // ===========================
 //        ADMIN ROUTES

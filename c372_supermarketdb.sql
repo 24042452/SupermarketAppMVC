@@ -95,6 +95,7 @@ CREATE TABLE `reviews` (
   `user_id` int NOT NULL,
   `rating` int NOT NULL,
   `comment` text COLLATE utf8mb4_general_ci,
+  `reply` text COLLATE utf8mb4_general_ci,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_review_product` (`product_id`),

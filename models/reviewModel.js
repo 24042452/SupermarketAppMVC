@@ -19,7 +19,19 @@ const addReview = (productId, userId, rating, comment, callback) => {
     db.query(sql, [productId, userId, rating, comment], callback);
 };
 
+const deleteReview = (id, callback) => {
+    const sql = 'DELETE FROM reviews WHERE id = ?';
+    db.query(sql, [id], callback);
+};
+
+const replyToReview = (id, reply, callback) => {
+    const sql = 'UPDATE reviews SET reply = ? WHERE id = ?';
+    db.query(sql, [reply, id], callback);
+};
+
 module.exports = {
     getReviewsByProduct,
-    addReview
+    addReview,
+    deleteReview,
+    replyToReview
 };

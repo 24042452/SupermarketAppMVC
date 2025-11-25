@@ -242,6 +242,46 @@ const addReview = (req, res) => {
     });
 };
 
+// Delete a review (admin only)
+const deleteReview = (req, res) => {
+    const reviewId = req.params.id;
+    const { productId } = req.body;
+
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.redirect('/');
+    }
+
+    ReviewModel.deleteReview(reviewId, (err) => {
+        if (err) {
+            console.error('Error deleting review:', err);
+            req.flash('error', 'Unable to delete review.');
+        } else {
+            req.flash('success', 'Review deleted.');
+        }
+        res.redirect(`/product/${productId}`);
+    });
+};
+
+// Reply to a review (admin only)
+const replyReview = (req, res) => {
+    const reviewId = req.params.id;
+    const { productId, reply } = req.body;
+
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.redirect('/');
+    }
+
+    ReviewModel.replyToReview(reviewId, reply || '', (err) => {
+        if (err) {
+            console.error('Error replying to review:', err);
+            req.flash('error', 'Unable to save reply.');
+        } else {
+            req.flash('success', 'Reply saved.');
+        }
+        res.redirect(`/product/${productId}`);
+    });
+};
+
 module.exports = {
     showAllProducts,
     showProductById,
@@ -251,5 +291,7 @@ module.exports = {
     updateProduct,
     deleteProduct,
     updateStock,
-    addReview
+    addReview,
+    deleteReview,
+    replyReview
 };

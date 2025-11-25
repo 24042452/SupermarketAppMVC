@@ -120,6 +120,25 @@
                 </div>
                 <p class="mb-1"><%= review.comment || 'No comment provided.' %></p>
                 <small class="text-muted"><%= review.created_at ? formatDate(review.created_at) : '' %></small>
+                <% if (review.reply) { %>
+                  <div class="mt-2 p-2 bg-light border rounded">
+                    <strong>Admin reply:</strong> <%= review.reply %>
+                  </div>
+                <% } %>
+
+                <% if (user && user.role === 'admin') { %>
+                  <div class="d-flex gap-2 mt-2">
+                    <form action="/reviews/<%= review.id %>/delete" method="POST" onsubmit="return confirm('Delete this review?');">
+                      <input type="hidden" name="productId" value="<%= product.id %>">
+                      <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                    <form action="/reviews/<%= review.id %>/reply" method="POST" class="d-flex gap-2 flex-grow-1">
+                      <input type="hidden" name="productId" value="<%= product.id %>">
+                      <input type="text" name="reply" class="form-control form-control-sm" placeholder="Reply..." value="<%= review.reply || '' %>">
+                      <button class="btn btn-sm btn-outline-primary">Save Reply</button>
+                    </form>
+                  </div>
+                <% } %>
               </div>
             <% }) %>
           <% } %>
