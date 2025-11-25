@@ -8,57 +8,87 @@
 
   <style>
     body {
-      background: #F6F7FB;
+      background: #F5F6FA;
+      font-family: 'Segoe UI', sans-serif;
     }
 
+    .section-title {
+      font-size: 1.9rem;
+      font-weight: 700;
+      margin-bottom: 30px;
+    }
+
+    /* CART ITEM */
     .cart-item {
       background: #fff;
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 25px;
+      transition: 0.2s ease;
+      border: 1px solid #eee;
+    }
+
+    .cart-item:hover {
+      box-shadow: 0 6px 15px rgba(0,0,0,0.07);
+      transform: translateY(-2px);
     }
 
     .cart-item img {
-      width: 130px;
-      height: 130px;
+      width: 140px;
+      height: 140px;
       object-fit: contain;
-      background: #f1f3f6;
-      border-radius: 10px;
+      background: #fafafa;
+      border-radius: 12px;
       padding: 10px;
+      border: 1px solid #eaeaea;
     }
 
     .product-title {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 600;
+      margin-bottom: 5px;
     }
 
     .price {
-      color: #2C98F0;
+      font-size: 1rem;
+      color: #1877F2;
       font-weight: 600;
     }
 
     .subtotal {
       font-size: 1rem;
       font-weight: 700;
-      color: #444;
-    }
-
-    .section-title {
-      font-size: 1.7rem;
-      font-weight: 700;
-      margin-bottom: 25px;
+      margin-top: 5px;
+      color: #333;
     }
 
     .btn-action {
       border-radius: 6px;
     }
 
+    /* SUMMARY BOX */
     .summary-box {
       background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 22px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+      border: 1px solid #e8e8e8;
+    }
+
+    .summary-box h5 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .summary-box p {
+      font-size: 1rem;
+    }
+
+    .summary-box strong {
+      font-size: 1.15rem;
     }
   </style>
 </head>
@@ -68,13 +98,15 @@
 
   <div class="container my-5">
 
-    <h2 class="section-title">Your Cart</h2>
+    <h2 class="section-title">Your Shopping Cart</h2>
 
     <% if (cart.length === 0) { %>
+
       <p class="text-center text-muted">Your cart is empty.</p>
       <div class="text-center mt-3">
-        <a href="/" class="btn btn-primary">Return to Shopping</a>
+        <a href="/" class="btn btn-primary px-4 py-2">Continue Shopping</a>
       </div>
+
     <% } else { %>
 
       <div class="row">
@@ -86,50 +118,56 @@
           <% cart.forEach(item => { %>
             <% total += item.price * item.quantity; %>
 
-            <div class="cart-item d-flex align-items-center">
+            <div class="cart-item">
 
-              <img src="/images/<%= item.image %>" alt="<%= item.productName %>" />
+              <img src="/images/<%= item.image %>" alt="<%= item.productName %>">
 
-              <div class="ms-3 flex-grow-1">
+              <div class="flex-grow-1">
+
                 <p class="product-title"><%= item.productName %></p>
+
                 <p class="price">$<%= item.price.toFixed(2) %></p>
-                <p>Quantity: <strong><%= item.quantity %></strong></p>
+
+                <p class="mb-1">Qty: <strong><%= item.quantity %></strong></p>
 
                 <p class="subtotal">
                   Subtotal: $<%= (item.price * item.quantity).toFixed(2) %>
                 </p>
 
-                <form action="/cart/remove/<%= item.id %>" method="POST">
+                <form action="/cart/remove/<%= item.id %>" method="POST" class="mt-2">
                   <button class="btn btn-danger btn-sm btn-action">Remove</button>
                 </form>
+
               </div>
             </div>
 
           <% }) %>
         </div>
 
-        <!-- SUMMARY BOX -->
+        <!-- SUMMARY -->
         <div class="col-lg-4">
           <div class="summary-box">
-            <h5 class="fw-bold">Order Summary</h5>
+
+            <h5>Order Summary</h5>
             <hr>
 
-            <p class="d-flex justify-content-between">
+            <p class="d-flex justify-content-between mb-2">
               <span>Total</span>
               <strong>$<%= total.toFixed(2) %></strong>
             </p>
 
             <form action="/checkout" method="GET" class="d-grid gap-2 mt-3">
-              <button class="btn btn-success btn-action">Checkout</button>
+              <button class="btn btn-success btn-action py-2">Proceed to Checkout</button>
             </form>
 
             <form action="/cart/clear" method="POST" class="d-grid gap-2 mt-2">
-              <button class="btn btn-warning btn-action">Clear Cart</button>
+              <button class="btn btn-warning btn-action py-2">Clear Cart</button>
             </form>
 
-            <a href="/" class="btn btn-secondary btn-action w-100 mt-2">
-              Return to Shopping
+            <a href="/" class="btn btn-secondary btn-action w-100 mt-2 py-2">
+              Continue Shopping
             </a>
+
           </div>
         </div>
 
