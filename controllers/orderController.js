@@ -100,6 +100,8 @@ const processCheckout = (req, res) => {
 // View all orders for logged-in user
 const showOrders = (req, res) => {
     const user = req.session.user;
+    const cart = req.session.cart || []; // <-- add this line
+
     if (!user) return res.redirect('/login');
 
     OrderModel.getOrdersByUser(user.id, (err, results) => {
@@ -107,7 +109,8 @@ const showOrders = (req, res) => {
 
         res.render('orderHistory', {
             orders: results,
-            user: user
+            user: user,
+            cart: req.session.cart || []
         });
     });
 };
@@ -122,7 +125,8 @@ const showOrderDetails = (req, res) => {
 
         res.render('orderDetails', {
             order: results,
-            user: user
+            user: user,
+            cart: req.session.cart || []
         });
     });
 };
