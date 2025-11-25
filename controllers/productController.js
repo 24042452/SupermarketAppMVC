@@ -1,24 +1,41 @@
 const ProductModel = require('../models/productModel');
 
-// Show all products (for inventory or shopping page)
+// Show all products (shopping page or admin inventory)
 const showAllProducts = (req, res) => {
+    const search = req.query.search;  // get ?search= keyword
+
     ProductModel.getAllProducts((err, results) => {
         if (err) {
             console.error('Error retrieving products:', err);
             return res.status(500).send('Error retrieving products');
         }
 
+        let filteredProducts = results;
+
+        // If search term exists → filter by product name
+        if (search && search.trim() !== "") {
+            const term = search.toLowerCase();
+            filteredProducts = results.filter(p =>
+                p.productName.toLowerCase().includes(term)
+            );
+        }
+
         // Admin sees inventory page
         if (req.session && req.session.user && req.session.user.role === 'admin') {
-            res.render('inventory', { products: results, user: req.session.user });
-        } else {
-            // Regular users see shopping page
-            res.render('shopping', { 
-                products: results, 
-                user: req.session.user || null,
-                cart: req.session.cart || []  // Pass cart for navbar dropdown
+            return res.render('inventory', { 
+                products: filteredProducts, 
+                user: req.session.user,
+                search: search || ""
             });
         }
+
+        // Regular user shopping page
+        res.render('shopping', { 
+            products: filteredProducts,
+            user: req.session.user || null,
+            cart: req.session.cart || [],
+            search: search || ""
+        });
     });
 };
 
@@ -32,7 +49,10 @@ const showProductById = (req, res) => {
         }
 
         if (results.length > 0) {
-            res.render('product', { product: results[0], user: req.session ? req.session.user : null });
+            res.render('product', { 
+                product: results[0], 
+                user: req.session ? req.session.user : null 
+            });
         } else {
             res.status(404).send('Product not found');
         }
@@ -68,7 +88,10 @@ const editProductForm = (req, res) => {
         }
 
         if (results.length > 0) {
-            res.render('updateProduct', { product: results[0], user: req.session.user || null });
+            res.render('updateProduct', { 
+                product: results[0], 
+                user: req.session.user || null 
+            });
         } else {
             res.status(404).send('Product not found');
         }

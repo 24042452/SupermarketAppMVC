@@ -32,9 +32,26 @@ const getOrderDetails = (orderId, callback) => {
     db.query(sql, [orderId], callback);
 };
 
+
+// Get all orders with user info
+const getAllOrders = (callback) => {
+    const sql = `SELECT o.*, u.username, u.email FROM orders o
+                 JOIN users u ON o.user_id = u.id
+                 ORDER BY o.order_date DESC`;
+    db.query(sql, callback);
+};
+
+// Update order status
+const updateOrderStatus = (orderId, status, callback) => {
+    const sql = 'UPDATE orders SET status = ? WHERE id = ?';
+    db.query(sql, [status, orderId], callback);
+};
+
 module.exports = {
     createOrder,
     addOrderItem,
     getOrdersByUser,
-    getOrderDetails
+    getOrderDetails,
+    getAllOrders,
+    updateOrderStatus
 };

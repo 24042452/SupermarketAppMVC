@@ -35,7 +35,7 @@ const loginUser = (req, res) => {
         if (user) {
             req.session.user = user;
             if (user.role === 'admin') {
-                res.redirect('/inventory');
+                res.redirect('/admin');
             } else {
                 res.redirect('/');
             }

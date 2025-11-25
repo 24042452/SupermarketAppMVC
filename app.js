@@ -15,6 +15,7 @@ const upload = multer({ storage: storage });
 const ProductController = require('./controllers/productController');
 const UserController = require('./controllers/userController');
 const orderController = require('./controllers/orderController');
+const AdminController = require('./controllers/adminController');
 
 // Middleware
 const { checkAuthenticated, checkAdmin } = require('./middlewares/middleware');
@@ -46,6 +47,12 @@ app.get('/product/:id', ProductController.showProductById);
 // ===========================
 //        ADMIN ROUTES
 // ===========================
+app.get('/admin', checkAuthenticated, checkAdmin, AdminController.showDashboard);
+app.get('/admin/users', checkAuthenticated, checkAdmin, AdminController.manageUsers);
+app.post('/admin/users/:id/delete', checkAuthenticated, checkAdmin, AdminController.deleteUser);
+app.get('/admin/orders', checkAuthenticated, checkAdmin, AdminController.manageOrders);
+app.post('/admin/orders/:id/status', checkAuthenticated, checkAdmin, AdminController.updateOrderStatus);
+
 app.get('/inventory', checkAuthenticated, checkAdmin, ProductController.showAllProducts);
 
 app.get('/addProduct', checkAuthenticated, checkAdmin, (req, res) => {
@@ -96,35 +103,26 @@ app.post('/add-to-cart/:id', (req, res) => {
     const productId = req.params.id;
     const qty = parseInt(req.body.quantity) || 1;
 
-    if (!req.session.cart) {
-        req.session.cart = [];
+    if (!req.session.cart) req.session.cart = [];
+    const cart = req.session.cart;
+
+    const existingItem = cart.find(item => item.id == productId);
+    if (existingItem) {
+        existingItem.quantity += qty;
+        return res.redirect('/');
     }
 
-    // If item already in cart → increase quantity
-    const findProduct = req.session.cart.find(prod => prod.id == productId);
-    if (findProduct) {
-        findProduct.quantity += qty;
-        res.redirect('/');
-        return;
-    }
-
-    // Otherwise fetch product and add new entry
     const ProductModel = require('./models/productModel');
-
     ProductModel.getProductById(productId, (err, results) => {
-        if (err || results.length === 0) {
-            res.redirect('/');
-            return;
-        }
-
+        if (err || results.length === 0) return res.redirect('/');
         const product = results[0];
 
-        req.session.cart.push({
+        cart.push({
             id: product.id,
             productName: product.productName,
             price: product.price,
             quantity: qty,
-            image: product.image   // now matches products table
+            image: product.image
         });
 
         res.redirect('/');
@@ -134,11 +132,9 @@ app.post('/add-to-cart/:id', (req, res) => {
 // Remove a single item
 app.post('/cart/remove/:id', (req, res) => {
     const productId = req.params.id;
-
     if (req.session.cart) {
-        req.session.cart = req.session.cart.filter(prod => prod.id != productId);
+        req.session.cart = req.session.cart.filter(item => item.id != productId);
     }
-
     res.redirect('/cart');
 });
 
@@ -148,13 +144,20 @@ app.post('/cart/clear', (req, res) => {
     res.redirect('/cart');
 });
 
-// Checkout
-app.post('/checkout', orderController.checkout);
+// ===========================
+//        CHECKOUT ROUTES
+// ===========================
+app.get('/checkout', orderController.showCheckout); // Display checkout page
+app.post('/checkout', orderController.processCheckout); // Process checkout POST
 
-// Order History
+// ===========================
+//       ORDER HISTORY
+// ===========================
 app.get('/orders', orderController.showOrders);
 app.get('/orders/:id', orderController.showOrderDetails);
 
-// Server
+// ===========================
+//          SERVER
+// ===========================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
