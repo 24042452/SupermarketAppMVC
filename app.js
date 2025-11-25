@@ -93,10 +93,7 @@ app.get('/login', (req, res) => {
 });
 app.post('/login', UserController.loginUser);
 
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/');
-});
+app.get('/logout', UserController.logoutUser);
 
 // ===========================
 //          CART ROUTES
@@ -106,19 +103,10 @@ app.post('/add-to-cart/:id', orderController.addToCart);
 app.post('/cart/update/:id', orderController.updateCartItem);
 
 // Remove a single item
-app.post('/cart/remove/:id', (req, res) => {
-    const productId = parseInt(req.params.id, 10);
-    if (req.session.cart) {
-        req.session.cart = req.session.cart.filter(item => (item.id || item.productId) != productId);
-    }
-    res.redirect('/cart');
-});
+app.post('/cart/remove/:id', orderController.removeCartItem);
 
 // Clear entire cart
-app.post('/cart/clear', (req, res) => {
-    req.session.cart = [];
-    res.redirect('/cart');
-});
+app.post('/cart/clear', orderController.clearCart);
 
 // ===========================
 //        CHECKOUT ROUTES

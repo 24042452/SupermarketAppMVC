@@ -1,5 +1,6 @@
 const OrderModel = require('../models/orderModel');
 const ProductModel = require('../models/productModel');
+const CartModel = require('../models/cartModel');
 
 const normalizeCartItems = (cart = []) => cart.map(item => ({
     productId: item.productId || item.id,
@@ -93,7 +94,16 @@ const addToCart = (req, res) => {
             req.flash('success', 'Item added to cart.');
         }
 
-        res.redirect('/cart');
+        // Persist cart for logged-in users
+        if (req.session.user) {
+            CartModel.upsertCartItem(req.session.user.id, productId, existingItem ? existingItem.quantity : qtyToAdd, (errSave) => {
+                if (errSave) console.error('Error saving cart item:', errSave);
+                return res.redirect('/cart');
+            });
+        } else {
+            res.redirect('/cart');
+        }
+
     });
 };
 
@@ -126,7 +136,15 @@ const updateCartItem = (req, res) => {
         if (product.quantity <= 0) {
             req.session.cart = cart.filter(i => (i.productId || i.id) !== productId);
             req.flash('error', `${item.productName || 'Item'} is out of stock and was removed from your cart.`);
-            return res.redirect('/cart');
+
+            if (req.session.user) {
+                CartModel.deleteCartItem(req.session.user.id, productId, (errDel) => {
+                    if (errDel) console.error('Error deleting cart item:', errDel);
+                    return res.redirect('/cart');
+                });
+            } else {
+                return res.redirect('/cart');
+            }
         }
 
         if (product.quantity < newQty) {
@@ -137,7 +155,26 @@ const updateCartItem = (req, res) => {
             req.flash('success', 'Cart updated.');
         }
 
-        res.redirect('/cart');
+        if (req.session.user) {
+            if (product.quantity < newQty) {
+                CartModel.upsertCartItem(req.session.user.id, productId, product.quantity, (errSave) => {
+                    if (errSave) console.error('Error saving cart item:', errSave);
+                    return res.redirect('/cart');
+                });
+            } else if (newQty <= 0) {
+                CartModel.deleteCartItem(req.session.user.id, productId, (errDel) => {
+                    if (errDel) console.error('Error deleting cart item:', errDel);
+                    return res.redirect('/cart');
+                });
+            } else {
+                CartModel.upsertCartItem(req.session.user.id, productId, newQty, (errSave) => {
+                    if (errSave) console.error('Error saving cart item:', errSave);
+                    return res.redirect('/cart');
+                });
+            }
+        } else {
+            res.redirect('/cart');
+        }
     });
 };
 
@@ -197,8 +234,13 @@ const processCheckout = (req, res) => {
                 const saveItem = (index) => {
                     if (index === items.length) {
                         req.session.cart = [];
-                        req.flash('success', 'Order placed successfully.');
-                        return res.redirect(`/orders/${orderId}/invoice`);
+                        // Clear persisted cart for this user
+                        CartModel.clearCart(user.id, (errClear) => {
+                            if (errClear) console.error('Error clearing saved cart:', errClear);
+                            req.flash('success', 'Order placed successfully.');
+                            return res.redirect(`/orders/${orderId}/invoice`);
+                        });
+                        return;
                     }
 
                     const item = items[index];
@@ -367,6 +409,37 @@ const showInvoice = (req, res) => {
     });
 };
 
+// Remove a single item from cart (and persisted cart if logged in)
+const removeCartItem = (req, res) => {
+    const productId = parseInt(req.params.id, 10);
+    if (req.session.cart) {
+        req.session.cart = req.session.cart.filter(item => (item.id || item.productId) != productId);
+    }
+
+    if (req.session.user) {
+        CartModel.deleteCartItem(req.session.user.id, productId, (errDel) => {
+            if (errDel) console.error('Error deleting cart item:', errDel);
+            return res.redirect('/cart');
+        });
+    } else {
+        res.redirect('/cart');
+    }
+};
+
+// Clear cart (session + persisted)
+const clearCart = (req, res) => {
+    req.session.cart = [];
+
+    if (req.session.user) {
+        CartModel.clearCart(req.session.user.id, (errClear) => {
+            if (errClear) console.error('Error clearing saved cart:', errClear);
+            return res.redirect('/cart');
+        });
+    } else {
+        res.redirect('/cart');
+    }
+};
+
 module.exports = {
     viewCart,
     addToCart,
@@ -375,5 +448,7 @@ module.exports = {
     processCheckout,
     showOrders,
     showOrderDetails,
-    showInvoice
+    showInvoice,
+    removeCartItem,
+    clearCart
 };
