@@ -18,7 +18,22 @@ const getOrdersByUser = (userId, callback) => {
     db.query(sql, [userId], callback);
 };
 
-// Get full order (header + items)
+// Get all items in one order
+const getOrderItems = (orderId, callback) => {
+    const sql = `
+        SELECT 
+            oi.quantity,
+            oi.price_each,
+            p.productName,
+            p.image
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?
+    `;
+    db.query(sql, [orderId], callback);
+};
+
+// Get full order info (header + items)
 const getOrderDetails = (orderId, callback) => {
     const sql = `
         SELECT o.id AS orderId, o.total, o.order_date, o.status,
@@ -32,10 +47,10 @@ const getOrderDetails = (orderId, callback) => {
     db.query(sql, [orderId], callback);
 };
 
-
-// Get all orders with user info
+// Admin: Get all orders with user info
 const getAllOrders = (callback) => {
-    const sql = `SELECT o.*, u.username, u.email FROM orders o
+    const sql = `SELECT o.*, u.username, u.email 
+                 FROM orders o
                  JOIN users u ON o.user_id = u.id
                  ORDER BY o.order_date DESC`;
     db.query(sql, callback);
@@ -51,6 +66,7 @@ module.exports = {
     createOrder,
     addOrderItem,
     getOrdersByUser,
+    getOrderItems,   
     getOrderDetails,
     getAllOrders,
     updateOrderStatus

@@ -100,31 +100,76 @@ const processCheckout = (req, res) => {
 // View all orders for logged-in user
 const showOrders = (req, res) => {
     const user = req.session.user;
-    const cart = req.session.cart || []; // <-- add this line
 
     if (!user) return res.redirect('/login');
 
-    OrderModel.getOrdersByUser(user.id, (err, results) => {
+    OrderModel.getOrdersByUser(user.id, (err, orders) => {
         if (err) throw err;
 
-        res.render('orderHistory', {
-            orders: results,
-            user: user,
-            cart: req.session.cart || []
-        });
+        let i = 0;
+
+        function loadNext() {
+            if (i === orders.length) {
+                return res.render('orderHistory', {
+                    orders: orders,
+                    user: user,
+                    cart: req.session.cart || []
+                });
+            }
+
+            const orderId = orders[i].id;
+
+            OrderModel.getOrderItems(orderId, (err2, items) => {
+                if (err2) throw err2;
+
+                // Attach items to the order
+                orders[i].items = items || [];
+
+                i++;
+                loadNext();
+            });
+        }
+
+        loadNext();
     });
 };
+
 
 // View single order details
 const showOrderDetails = (req, res) => {
     const orderId = req.params.id;
     const user = req.session.user;
 
-    OrderModel.getOrderDetails(orderId, (err, results) => {
+    OrderModel.getOrderDetails(orderId, (err, rows) => {
         if (err) throw err;
 
+        if (!rows || rows.length === 0) {
+            return res.redirect('/orders');
+        }
+
+        const order = {
+            id: rows[0].orderId,
+            total: rows[0].total,
+            order_date: rows[0].order_date,
+            status: rows[0].status,
+            items: []
+        };
+
+        let i = 0;
+
+        while (i < rows.length) {
+            order.items.push({
+                productId: rows[i].product_id,
+                productName: rows[i].productName,
+                quantity: rows[i].quantity,
+                price: rows[i].price_each,
+                image: rows[i].image
+            });
+            i++;
+        }
+
         res.render('orderDetails', {
-            order: results,
+            order: order,
             user: user,
             cart: req.session.cart || []
         });

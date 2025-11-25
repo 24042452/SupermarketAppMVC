@@ -1,13 +1,19 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
-<nav class="navbar navbar-expand-sm shadow-sm" style="background: linear-gradient(90deg, #4b6cb7, #182848);">
+<% 
+  const hasCart = Array.isArray(cart) && cart.length > 0;
+  const cartCount = hasCart ? cart.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
+  const cartTotal = hasCart ? cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0;
+%>
+
+<nav class="navbar navbar-expand-sm nav-slim py-3">
   <div class="container-fluid">
 
     <!-- Brand -->
-    <a class="navbar-brand fw-bold text-white fs-4" href="/">Dylan's Supermarket</a>
+    <a class="navbar-brand fs-4" href="/">Dylan's Supermarket</a>
 
     <!-- Mobile Toggle -->
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+    <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
       <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -18,42 +24,38 @@
         <% if (user) { %>
 
           <!-- Greeting -->
-          <li class="nav-item me-4 text-white fw-semibold">
+          <li class="nav-item me-3 text-white fw-semibold small">
             Hello, <%= user.username %>
           </li>
 
           <!-- Cart Dropdown -->
           <li class="nav-item dropdown cart position-relative me-3">
-            <a class="nav-link dropdown-toggle d-flex align-items-center cart-link" href="#" data-bs-toggle="dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
               <i class="bi bi-cart3 fs-5 me-1"></i>
-              Cart (<%= cart ? cart.length : 0 %>)
+              Cart (<%= cartCount %>)
             </a>
 
-            <div class="dropdown-menu dropdown-menu-end p-3 shadow rounded-3" style="min-width: 280px; max-height: 400px; overflow-y: auto;">
+            <div class="dropdown-menu dropdown-menu-end p-3 shadow rounded-4 cart-dropdown">
 
-              <% if (!cart || cart.length === 0) { %>
+              <% if (!hasCart) { %>
                 <div class="text-center text-muted py-3">Your cart is empty.</div>
               <% } else { %>
 
-                <% let totalPrice = 0; %>
-                <% cart.forEach(item => { 
-                    totalPrice = totalPrice + (item.price * item.quantity); 
-                %>
-                  <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                    <div>
+                <% cart.forEach(item => { %>
+                  <div class="d-flex gap-3 align-items-center border-bottom pb-2 mb-2">
+                    <img src="/images/<%= item.image %>" alt="<%= item.productName %>" class="cart-thumb">
+                    <div class="flex-grow-1">
                       <div class="fw-semibold"><%= item.productName %></div>
-                      <div class="text-muted small">Qty: <%= item.quantity %></div>
+                      <div class="text-muted small">Qty: <%= item.quantity %> · $<%= (item.price * item.quantity).toFixed(2) %></div>
                     </div>
-                    <div class="fw-bold text-success">$<%= (item.price * item.quantity).toFixed(2) %></div>
                   </div>
                 <% }) %>
 
-                <div class="d-flex justify-content-between mt-2 mb-3">
-                  <span class="fw-bold">Total:</span>
-                  <span class="fw-bold text-primary">$<%= totalPrice.toFixed(2) %></span>
+                <div class="d-flex justify-content-between mt-2 mb-3 fw-bold">
+                  <span>Total</span>
+                  <span class="text-primary">$<%= cartTotal.toFixed(2) %></span>
                 </div>
 
-                <!-- Updated View Cart button -->
                 <a href="/cart" class="btn btn-primary btn-sm w-100 rounded-pill">View Cart</a>
               <% } %>
 
@@ -62,24 +64,24 @@
 
           <!-- Order History -->
           <li class="nav-item me-3">
-            <a class="nav-link text-white fw-semibold" href="/orders">Order History</a>
+            <a class="nav-link" href="/orders">Order History</a>
           </li>
 
           <!-- Logout -->
           <li class="nav-item">
-            <a class="nav-link text-white fw-semibold btn btn-outline-light btn-sm rounded-pill px-3 logout-btn" href="/logout">Logout</a>
+            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3 logout-btn" href="/logout">Logout</a>
           </li>
 
         <% } else { %>
 
           <!-- Login -->
           <li class="nav-item me-2">
-            <a class="nav-link text-white fw-semibold btn btn-outline-light btn-sm rounded-pill px-3" href="/login">Login</a>
+            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="/login">Login</a>
           </li>
 
           <!-- Register -->
           <li class="nav-item">
-            <a class="nav-link text-white fw-semibold btn btn-outline-light btn-sm rounded-pill px-3" href="/register">Register</a>
+            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3" href="/register">Register</a>
           </li>
 
         <% } %>
@@ -90,48 +92,36 @@
 </nav>
 
 <style>
-  /* Cart Scrollbar */
-  .cart .dropdown-menu::-webkit-scrollbar {
-    width: 6px;
+  .cart-dropdown {
+    min-width: 320px;
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
   }
 
-  .cart .dropdown-menu::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
+  .cart-dropdown::-webkit-scrollbar { width: 6px; }
+  .cart-dropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+  .cart-thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    background: #f8fbff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 4px;
   }
 
-  /* Dropdown fade-in */
-  .navbar .dropdown-menu {
-    animation: fadeIn 0.2s ease-in-out;
-  }
-
+  .navbar .dropdown-menu { animation: fadeIn 0.2s ease-in-out; }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Cart color white */
-  .cart-link {
-    color: white !important;
-  }
-
-  .cart-link:hover {
-    color: #ffd700 !important;
-  }
-
-  /* Logout button hover */
-  .logout-btn {
-    transition: all 0.3s ease;
-  }
-
+  .logout-btn { transition: all 0.3s ease; }
   .logout-btn:hover {
-    background-color: #ffd700;
+    background-color: #ffd814;
     border-color: transparent;
-    color: #182848 !important;
-  }
-
-  /* Other links hover */
-  .navbar-nav .nav-link:hover:not(.cart-link):not(.logout-btn) {
-    color: #ffd700 !important;
+    color: #0b1c40 !important;
   }
 </style>

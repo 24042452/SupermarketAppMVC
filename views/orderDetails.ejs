@@ -6,54 +6,112 @@
   <title>Order Details</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/css/theme.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
-    body { background: #F6FAFE; }
-    .navbar { box-shadow: 0 3px 6px rgba(0,0,0,0.04); }
+    body {
+      background: radial-gradient(circle at 10% 20%, #e8f0ff 0, #f7f9fc 28%, #eef2f6 60%);
+      font-family: 'Segoe UI', sans-serif;
+      color: #0f172a;
+    }
 
-    .order-item-card {
-      border-radius: 15px;
-      border: none;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.03);
-      transition: box-shadow 0.3s, transform 0.3s;
-      background: #fff;
-      overflow: hidden;
+    .page-wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #0b1c40;
+      margin-bottom: 10px;
+      letter-spacing: -0.03em;
+    }
+
+    .section-subtitle {
+      color: #5f6b7a;
+      margin-bottom: 28px;
+    }
+
+    .order-box {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fbff 80%);
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .order-header {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 14px;
+      margin-bottom: 12px;
+    }
+
+    .order-header div span {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .order-header small {
+      color: #5f6b7a;
+    }
+
+    .status-badge {
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .status-badge i { font-size: 1.1rem; }
+    .status-pending { background-color: #ffe9a3; color: #8a5b00; }
+    .status-delivery { background-color: #dbeafe; color: #0f3d8a; }
+    .status-delivered { background-color: #c7f8d4; color: #146533; }
+
+    .product-list { margin-top: 14px; }
+
+    .product-item {
       display: flex;
       gap: 15px;
-      padding: 15px;
-      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px dashed #e2e8f0;
     }
-    .order-item-card:hover {
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      transform: translateY(-3px) scale(1.02);
-    }
-    .order-item-image {
-      width: 80px;
-      height: 80px;
+
+    .product-item:last-child { border-bottom: none; }
+
+    .product-item img {
+      width: 85px;
+      height: 85px;
       object-fit: contain;
-      background: #F3F5F9;
-      border-radius: 10px;
-      padding: 5px;
+      background: #f8fbff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 8px;
     }
-    .order-item-info {
-      flex: 1;
-    }
-    .order-item-title {
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #222;
-      margin-bottom: 4px;
-    }
-    .order-item-details {
-      font-size: 0.95rem;
-      color: #555;
-    }
-    .order-total {
-      font-size: 1.25rem;
+
+    .product-title {
+      font-size: 1.05rem;
       font-weight: 700;
-      color: #2C98F0;
-      margin-top: 20px;
+      margin-bottom: 4px;
+      color: #0f172a;
+    }
+
+    .product-meta { color: #6b7280; font-size: 0.95rem; }
+
+    .order-total {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #0b1c40;
+      margin-top: 18px;
       text-align: right;
     }
   </style>
@@ -64,34 +122,72 @@
   <%- include('partials/navbar', { user: user, cart: cart }) %>
 
   <!-- Main Content -->
-  <div class="container my-5 px-3">
-    <h2 class="text-center fw-bold mb-4">Order #<%= order[0] ? order[0].order_id : '' %> Details</h2>
+  <div class="container my-5 px-3 page-wrapper">
+    <h2 class="section-title text-center">Order #<%= order.id %></h2>
+    <p class="section-subtitle text-center">Review your items, prices, and delivery status.</p>
 
-    <% if (!order || order.length === 0) { %>
+    <% if (!order || !order.items || order.items.length === 0) { %>
       <p class="text-center text-muted">No items found in this order.</p>
     <% } else { %>
 
-      <% let grandTotal = 0; %>
-      <div class="row g-3">
-        <% order.forEach(item => { 
-          let lineTotal = item.quantity * item.price_each;
-          grandTotal += lineTotal;
-        %>
-          <div class="col-12">
-            <div class="order-item-card">
-              <img src="/images/<%= item.image %>" alt="<%= item.productName %>" class="order-item-image">
-              <div class="order-item-info">
-                <div class="order-item-title"><%= item.productName %></div>
-                <div class="order-item-details">
-                  Quantity: <%= item.quantity %> | Price Each: $<%= item.price_each %> | Total: $<%= lineTotal %>
-                </div>
+      <% 
+        let statusClass = '';
+        const statusLower = order.status.toLowerCase();
+        if(statusLower === 'pending') statusClass = 'status-pending';
+        else if(statusLower === 'delivery') statusClass = 'status-delivery';
+        else if(statusLower === 'delivered') statusClass = 'status-delivered';
+
+        let statusLabel = order.status;
+        if(statusLower === 'delivery') statusLabel = 'Delivery';
+        else if(statusLower === 'delivered') statusLabel = 'Delivered';
+
+        let grandTotal = 0; 
+      %>
+
+      <div class="order-box">
+        <div class="order-header">
+          <div>
+            <span>Order Placed:</span><br>
+            <small><%= order.order_date %></small>
+          </div>
+          <div>
+            <span>Total:</span><br>
+            <small>$<%= order.total %></small>
+          </div>
+          <div>
+            <span>Status:</span><br>
+            <small><%= statusLabel %></small>
+          </div>
+          <div>
+            <span>Ship To:</span><br>
+            <small><%= user && user.address ? user.address : '—' %></small>
+          </div>
+        </div>
+
+        <p class="status-badge <%= statusClass %>">
+          <i class="bi bi-truck"></i>
+          <%= statusLabel %>
+        </p>
+
+        <div class="product-list">
+          <% order.items.forEach(item => { 
+            const lineTotal = item.quantity * item.price;
+            grandTotal += lineTotal;
+          %>
+            <div class="product-item">
+              <img src="/images/<%= item.image %>" alt="<%= item.productName %>">
+              <div class="flex-grow-1">
+                <p class="product-title"><%= item.productName %></p>
+                <p class="product-meta">
+                  Quantity: <%= item.quantity %> &nbsp;|&nbsp; Price Each: $<%= item.price %> &nbsp;|&nbsp; Line Total: $<%= lineTotal %>
+                </p>
               </div>
             </div>
-          </div>
-        <% }) %>
-      </div>
+          <% }) %>
+        </div>
 
-      <div class="order-total">Grand Total: $<%= grandTotal %></div>
+        <div class="order-total">Grand Total: $<%= grandTotal %></div>
+      </div>
 
     <% } %>
   </div>
