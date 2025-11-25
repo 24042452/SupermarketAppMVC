@@ -30,10 +30,24 @@ const deleteProduct = (id, callback) => {
     db.query(sql, [id], callback);
 };
 
+// Update only product quantity
+const updateProductQuantity = (id, quantity, callback) => {
+    const sql = 'UPDATE products SET quantity = ? WHERE id = ?';
+    db.query(sql, [quantity, id], callback);
+};
+
+// Decrease stock after purchase (guard against negative stock)
+const decreaseStock = (id, qty, callback) => {
+    const sql = 'UPDATE products SET quantity = quantity - ? WHERE id = ? AND quantity >= ?';
+    db.query(sql, [qty, id, qty], callback);
+};
+
 module.exports = {
     getAllProducts,
     getProductById,
     addProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    updateProductQuantity,
+    decreaseStock
 };

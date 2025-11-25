@@ -178,8 +178,10 @@
               <img src="images/<%= product.image %>" alt="<%= product.productName %>" class="card-img-top product-image">
               <div class="card-body d-flex flex-column">
                 <h5 class="card-title"><%= product.productName %></h5>
-                <p class="price">$<%= product.price.toFixed(2) %></p>
+                <p class="price">$<%= Number(product.price).toFixed(2) %></p>
+                <p class="text-muted small mb-1">In stock: <%= product.quantity %></p>
 
+                <% const outOfStock = product.quantity <= 0; %>
                 <% if (user) { %>
                   <form action="/add-to-cart/<%= product.id %>" method="POST" class="mt-auto">
                     <div class="mb-2">
@@ -190,10 +192,16 @@
                         <% } %>
                       </select>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Add to Cart</button>
+                    <button type="submit" class="btn btn-primary w-100" <%= outOfStock ? 'disabled' : '' %>>Add to Cart</button>
+                    <% if (outOfStock) { %>
+                      <small class="text-danger">Out of stock</small>
+                    <% } %>
                   </form>
                 <% } else { %>
-                  <a href="/login" class="btn btn-secondary w-100 mt-auto">Login to Buy</a>
+                  <a href="/login" class="btn btn-secondary w-100 mt-auto" <%= outOfStock ? 'aria-disabled=\"true\"' : '' %>>Login to Buy</a>
+                  <% if (outOfStock) { %>
+                    <small class="text-danger d-block mt-1">Out of stock</small>
+                  <% } %>
                 <% } %>
 
               </div>

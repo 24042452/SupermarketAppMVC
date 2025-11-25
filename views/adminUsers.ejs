@@ -22,7 +22,43 @@
   <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h3 class="mb-0 fw-bold">Users</h3>
-      <a href="/register" class="btn btn-sm btn-primary">Add User</a>
+    </div>
+
+    <% if (messages && messages.length) { %>
+      <div class="alert alert-danger"><%= messages.join('<br>') %></div>
+    <% } %>
+    <% if (success && success.length) { %>
+      <div class="alert alert-success"><%= success.join('<br>') %></div>
+    <% } %>
+
+    <div class="card p-3 mb-4">
+      <h5 class="fw-bold mb-3">Create User</h5>
+      <form action="/admin/users" method="POST" class="row g-2">
+        <div class="col-md-3">
+          <input type="text" name="username" class="form-control" placeholder="Username" required>
+        </div>
+        <div class="col-md-3">
+          <input type="email" name="email" class="form-control" placeholder="Email" required>
+        </div>
+        <div class="col-md-2">
+          <input type="password" name="password" class="form-control" placeholder="Password" required>
+        </div>
+        <div class="col-md-2">
+          <input type="text" name="contact" class="form-control" placeholder="Contact" required>
+        </div>
+        <div class="col-md-2">
+          <input type="text" name="address" class="form-control" placeholder="Address" required>
+        </div>
+        <div class="col-md-2 mt-2">
+          <select name="role" class="form-select" required>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="col-md-2 mt-2 d-grid">
+          <button class="btn btn-primary">Create</button>
+        </div>
+      </form>
     </div>
 
     <div class="card p-3">

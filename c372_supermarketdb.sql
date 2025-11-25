@@ -7,6 +7,9 @@ DROP TABLE IF EXISTS `order_items`;
 -- Table structure for table `orders`
 DROP TABLE IF EXISTS `orders`;
 
+-- Table structure for table `reviews`
+DROP TABLE IF EXISTS `reviews`;
+
 -- Table structure for table `products`
 DROP TABLE IF EXISTS `products`;
 CREATE TABLE `products` (
@@ -53,7 +56,8 @@ INSERT INTO `users` VALUES
   (1,'Peter Lim','peter@peter.com','password','Woodlands Ave 2','98765432','admin'),
   (2,'Mary Tan','mary@mary.com','password','Tampines Ave 1','12345678','user'),
   (3,'bobochan','bobochan@gmail.com','password','Woodlands','98765432','user'),
-  (4,'sarahlee','sarahlee@gmail.com','password','Woodlands','98765432','user');
+  (4,'sarahlee','sarahlee@gmail.com','password','Woodlands','98765432','user'),
+  (5,'admin1','admin1@admin.com','123456','woodlands ave 2','87654321','admin');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -81,4 +85,20 @@ CREATE TABLE `order_items` (
   KEY `fk_items_product` (`product_id`),
   CONSTRAINT `fk_items_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `reviews`
+DROP TABLE IF EXISTS `reviews`;
+CREATE TABLE `reviews` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `rating` int NOT NULL,
+  `comment` text COLLATE utf8mb4_general_ci,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_review_product` (`product_id`),
+  KEY `fk_review_user` (`user_id`),
+  CONSTRAINT `fk_review_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_review_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

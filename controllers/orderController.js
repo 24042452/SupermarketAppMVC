@@ -1,6 +1,37 @@
 const OrderModel = require('../models/orderModel');
 const ProductModel = require('../models/productModel');
 
+const normalizeCartItems = (cart = []) => cart.map(item => ({
+    productId: item.productId || item.id,
+    productName: item.productName,
+    price: Number(item.price) || 0,
+    quantity: Number(item.quantity) || 0,
+    image: item.image
+}));
+
+const validateStock = (items, onSuccess, onInsufficient, onError) => {
+    let index = 0;
+
+    const next = () => {
+        if (index >= items.length) return onSuccess();
+
+        const current = items[index];
+        ProductModel.getProductById(current.productId, (err, results) => {
+            if (err) return onError(err);
+            const product = results && results[0];
+
+            if (!product || product.quantity < current.quantity) {
+                return onInsufficient(current, product ? product.quantity : 0);
+            }
+
+            index += 1;
+            next();
+        });
+    };
+
+    next();
+};
+
 // View cart page
 const viewCart = (req, res) => {
     const cart = req.session.cart || [];
@@ -9,38 +40,104 @@ const viewCart = (req, res) => {
     res.render('cart', {
         cart: cart,
         total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
-        user: user
+        user: user,
+        messages: req.flash('error'),
+        success: req.flash('success')
     });
 };
 
-// Add product to cart
+// Add product to cart with stock check
 const addToCart = (req, res) => {
-    const productId = parseInt(req.params.id);
-    const quantity = parseInt(req.body.quantity) || 1;
+    const productId = parseInt(req.params.id, 10);
+    const quantity = Math.max(parseInt(req.body.quantity, 10) || 1, 1);
 
     if (!req.session.cart) req.session.cart = [];
     const cart = req.session.cart;
 
     ProductModel.getProductById(productId, (err, results) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error retrieving product for cart:', err);
+            return res.status(500).send('Error adding to cart');
+        }
+
         if (!results || results.length === 0) return res.redirect('/');
 
         const product = results[0];
-        const existingItem = cart.find(item => item.productId === productId);
+        const existingItem = cart.find(item => (item.productId || item.id) === productId);
+        const existingQty = existingItem ? existingItem.quantity : 0;
+        const available = product.quantity;
+
+        if (existingQty >= available) {
+            req.flash('error', `Only ${available} left for ${product.productName}.`);
+            return res.redirect('/cart');
+        }
+
+        const qtyToAdd = Math.min(quantity, available - existingQty);
 
         if (existingItem) {
-            existingItem.quantity += quantity;
+            existingItem.quantity += qtyToAdd;
         } else {
             cart.push({
+                id: product.id,
                 productId: product.id,
                 productName: product.productName,
-                price: product.price,
-                quantity: quantity,
+                price: Number(product.price) || 0,
+                quantity: qtyToAdd,
                 image: product.image
             });
         }
 
-        res.redirect('/');
+        if (qtyToAdd < quantity) {
+            req.flash('error', `Quantity adjusted to available stock (${available}) for ${product.productName}.`);
+        } else {
+            req.flash('success', 'Item added to cart.');
+        }
+
+        res.redirect('/cart');
+    });
+};
+
+// Update cart quantity
+const updateCartItem = (req, res) => {
+    const productId = parseInt(req.params.id, 10);
+    const newQty = parseInt(req.body.quantity, 10);
+
+    if (!req.session.cart) req.session.cart = [];
+    const cart = req.session.cart;
+    const item = cart.find(i => (i.productId || i.id) === productId);
+
+    if (!item) return res.redirect('/cart');
+
+    if (Number.isNaN(newQty) || newQty <= 0) {
+        req.session.cart = cart.filter(i => (i.productId || i.id) !== productId);
+        req.flash('success', 'Item removed from cart.');
+        return res.redirect('/cart');
+    }
+
+    ProductModel.getProductById(productId, (err, results) => {
+        if (err) {
+            console.error('Error checking stock:', err);
+            return res.status(500).send('Error updating cart');
+        }
+
+        const product = results && results[0];
+        if (!product) return res.redirect('/cart');
+
+        if (product.quantity <= 0) {
+            req.session.cart = cart.filter(i => (i.productId || i.id) !== productId);
+            req.flash('error', `${item.productName || 'Item'} is out of stock and was removed from your cart.`);
+            return res.redirect('/cart');
+        }
+
+        if (product.quantity < newQty) {
+            item.quantity = product.quantity;
+            req.flash('error', `Only ${product.quantity} left for ${product.productName}. Quantity adjusted.`);
+        } else {
+            item.quantity = newQty;
+            req.flash('success', 'Cart updated.');
+        }
+
+        res.redirect('/cart');
     });
 };
 
@@ -52,13 +149,27 @@ const showCheckout = (req, res) => {
     if (!user) return res.redirect('/login');
     if (!cart.length) return res.redirect('/cart');
 
-    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const items = normalizeCartItems(cart);
+    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    res.render('checkout', {
-        user: user,
-        cart: cart,
-        total: total
-    });
+    validateStock(
+        items,
+        () => {
+            res.render('checkout', {
+                user: user,
+                cart: cart,
+                total: total
+            });
+        },
+        (item, available) => {
+            req.flash('error', `Not enough stock for ${item.productName || 'item'} (available: ${available}).`);
+            res.redirect('/cart');
+        },
+        (err) => {
+            console.error('Error validating stock:', err);
+            res.status(500).send('Error loading checkout');
+        }
+    );
 };
 
 // Process checkout (POST)
@@ -69,32 +180,63 @@ const processCheckout = (req, res) => {
     if (!user) return res.redirect('/login');
     if (!cart || cart.length === 0) return res.redirect('/cart');
 
-    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const items = normalizeCartItems(cart);
+    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    OrderModel.createOrder(user.id, total, (err, result) => {
-        if (err) throw err;
+    validateStock(
+        items,
+        () => {
+            OrderModel.createOrder(user.id, total, (err, result) => {
+                if (err) {
+                    console.error('Error creating order:', err);
+                    return res.status(500).send('Error creating order');
+                }
 
-        const orderId = result.insertId;
-        let index = 0;
+                const orderId = result.insertId;
 
-        function insertNext() {
-            if (index === cart.length) {
-                req.session.cart = [];
-                return res.redirect('/orders');
-            }
+                const saveItem = (index) => {
+                    if (index === items.length) {
+                        req.session.cart = [];
+                        req.flash('success', 'Order placed successfully.');
+                        return res.redirect('/orders');
+                    }
 
-            const item = cart[index];
-            const productId = item.id || item.productId;
+                    const item = items[index];
 
-            OrderModel.addOrderItem(orderId, productId, item.quantity, item.price, (err2) => {
-                if (err2) throw err2;
-                index++;
-                insertNext();
+                    OrderModel.addOrderItem(orderId, item.productId, item.quantity, item.price, (err2) => {
+                        if (err2) {
+                            console.error('Error adding order item:', err2);
+                            return res.status(500).send('Error saving order items');
+                        }
+
+                        ProductModel.decreaseStock(item.productId, item.quantity, (err3, result3) => {
+                            if (err3) {
+                                console.error('Error updating stock:', err3);
+                                return res.status(500).send('Error updating stock');
+                            }
+
+                            if (result3 && result3.affectedRows === 0) {
+                                req.flash('error', `Stock changed for ${item.productName}. Please try again.`);
+                                return res.redirect('/cart');
+                            }
+
+                            saveItem(index + 1);
+                        });
+                    });
+                };
+
+                saveItem(0);
             });
+        },
+        (item, available) => {
+            req.flash('error', `Not enough stock for ${item.productName || 'item'} (available: ${available}).`);
+            res.redirect('/cart');
+        },
+        (err) => {
+            console.error('Error validating stock:', err);
+            res.status(500).send('Error processing order');
         }
-
-        insertNext();
-    });
+    );
 };
 
 // View all orders for logged-in user
@@ -113,7 +255,9 @@ const showOrders = (req, res) => {
                 return res.render('orderHistory', {
                     orders: orders,
                     user: user,
-                    cart: req.session.cart || []
+                    cart: req.session.cart || [],
+                    messages: req.flash('error'),
+                    success: req.flash('success')
                 });
             }
 
@@ -179,6 +323,7 @@ const showOrderDetails = (req, res) => {
 module.exports = {
     viewCart,
     addToCart,
+    updateCartItem,
     showCheckout,
     processCheckout,
     showOrders,

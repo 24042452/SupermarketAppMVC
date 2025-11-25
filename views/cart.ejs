@@ -101,6 +101,12 @@
   <div class="container my-5">
 
     <h2 class="section-title">Your Shopping Cart</h2>
+    <% if (messages && messages.length) { %>
+      <div class="alert alert-danger"><%= messages.join('<br>') %></div>
+    <% } %>
+    <% if (success && success.length) { %>
+      <div class="alert alert-success"><%= success.join('<br>') %></div>
+    <% } %>
 
     <% if (cart.length === 0) { %>
 
@@ -128,17 +134,22 @@
 
                 <p class="product-title"><%= item.productName %></p>
 
-                <p class="price">$<%= item.price.toFixed(2) %></p>
+                <p class="price">$<%= Number(item.price).toFixed(2) %></p>
 
                 <p class="mb-1">Qty: <strong><%= item.quantity %></strong></p>
 
                 <p class="subtotal">
-                  Subtotal: $<%= (item.price * item.quantity).toFixed(2) %>
+                  Subtotal: $<%= (Number(item.price) * item.quantity).toFixed(2) %>
                 </p>
-
-                <form action="/cart/remove/<%= item.id %>" method="POST" class="mt-2">
-                  <button class="btn btn-danger btn-sm btn-action">Remove</button>
-                </form>
+                <div class="d-flex gap-2 align-items-center mt-2">
+                  <form action="/cart/update/<%= item.id || item.productId %>" method="POST" class="d-flex gap-2 align-items-center">
+                    <input type="number" name="quantity" min="1" class="form-control form-control-sm" style="width:90px" value="<%= item.quantity %>">
+                    <button class="btn btn-primary btn-sm btn-action">Update</button>
+                  </form>
+                  <form action="/cart/remove/<%= item.id || item.productId %>" method="POST">
+                    <button class="btn btn-danger btn-sm btn-action">Remove</button>
+                  </form>
+                </div>
 
               </div>
             </div>

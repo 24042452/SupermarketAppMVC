@@ -132,14 +132,16 @@
 
       <% 
         let statusClass = '';
-        const statusLower = order.status.toLowerCase();
+        const statusLower = (order.status || '').toLowerCase();
         if(statusLower === 'pending') statusClass = 'status-pending';
         else if(statusLower === 'delivery') statusClass = 'status-delivery';
         else if(statusLower === 'delivered') statusClass = 'status-delivered';
 
-        let statusLabel = order.status;
+        let statusLabel = order.status || 'Pending';
         if(statusLower === 'delivery') statusLabel = 'Delivery';
         else if(statusLower === 'delivered') statusLabel = 'Delivered';
+        else if(statusLower === 'pending') statusLabel = 'Pending';
+        else statusLabel = statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1);
 
         let grandTotal = 0; 
       %>
@@ -171,7 +173,7 @@
 
         <div class="product-list">
           <% order.items.forEach(item => { 
-            const lineTotal = item.quantity * item.price;
+            const lineTotal = Number(item.quantity) * Number(item.price);
             grandTotal += lineTotal;
           %>
             <div class="product-item">
@@ -179,14 +181,18 @@
               <div class="flex-grow-1">
                 <p class="product-title"><%= item.productName %></p>
                 <p class="product-meta">
-                  Quantity: <%= item.quantity %> &nbsp;|&nbsp; Price Each: $<%= item.price %> &nbsp;|&nbsp; Line Total: $<%= lineTotal %>
+                  Quantity: <%= item.quantity %> &nbsp;|&nbsp; Price Each: $<%= Number(item.price).toFixed(2) %> &nbsp;|&nbsp; Total: $<%= lineTotal.toFixed(2) %>
                 </p>
               </div>
             </div>
           <% }) %>
         </div>
 
-        <div class="order-total">Grand Total: $<%= grandTotal %></div>
+        <div class="order-total">Grand Total: $<%= grandTotal.toFixed(2) %></div>
+        <div class="mt-3 d-flex gap-2 justify-content-end">
+          <a href="/" class="btn btn-outline-primary">Back to Home</a>
+          <a href="/orders" class="btn btn-primary">Back to Order History</a>
+        </div>
       </div>
 
     <% } %>

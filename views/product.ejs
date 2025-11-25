@@ -44,6 +44,12 @@
     <div class="product-card">
       <h2 class="section-title text-center mb-2">Product Details</h2>
       <p class="section-subtitle text-center mb-4">Welcome, <%= user ? user.username : 'Guest' %> (<%= user ? user.role : 'N/A' %>)</p>
+      <% if (messages && messages.length) { %>
+        <div class="alert alert-danger text-center"><%= messages.join('<br>') %></div>
+      <% } %>
+      <% if (success && success.length) { %>
+        <div class="alert alert-success text-center"><%= success.join('<br>') %></div>
+      <% } %>
 
       <% if (product) { %>
         <div class="row g-4 align-items-center">
@@ -53,8 +59,58 @@
           <div class="col-md-7">
             <h4 class="fw-bold mb-2"><%= product.productName %></h4>
             <p class="text-muted mb-2">Quantity: <strong><%= product.quantity %></strong></p>
-            <p class="fw-bold fs-5 text-primary mb-3">$<%= product.price.toFixed(2) %></p>
+            <p class="fw-bold fs-5 text-primary mb-3">$<%= Number(product.price).toFixed(2) %></p>
+            <% if (averageRating) { %>
+              <p class="mb-2">Average rating: <strong><%= averageRating %></strong>/5</p>
+            <% } %>
           </div>
+        </div>
+
+        <div class="mt-4">
+          <h5 class="fw-bold">Customer Reviews</h5>
+          <% if (!reviews || reviews.length === 0) { %>
+            <p class="text-muted">No reviews yet.</p>
+          <% } else { %>
+            <% reviews.forEach(review => { %>
+              <div class="border rounded p-3 mb-2 bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                  <strong><%= review.username %></strong>
+                  <span class="text-warning">
+                    <% for (let star = 1; star <= 5; star++) { %>
+                      <%= star <= review.rating ? '★' : '☆' %>
+                    <% } %>
+                  </span>
+                </div>
+                <p class="mb-1"><%= review.comment || 'No comment provided.' %></p>
+                <small class="text-muted"><%= review.created_at || '' %></small>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+
+        <div class="mt-4">
+          <h5 class="fw-bold">Leave a Review</h5>
+          <% if (user) { %>
+            <form action="/product/<%= product.id %>/review" method="POST" class="row g-2">
+              <div class="col-md-3">
+                <label class="form-label">Rating</label>
+                <select name="rating" class="form-select" required>
+                  <% for (let r = 5; r >= 1; r--) { %>
+                    <option value="<%= r %>"><%= r %> star<%= r > 1 ? 's' : '' %></option>
+                  <% } %>
+                </select>
+              </div>
+              <div class="col-md-9">
+                <label class="form-label">Comment</label>
+                <textarea name="comment" class="form-control" rows="2" placeholder="Share your thoughts"></textarea>
+              </div>
+              <div class="col-12">
+                <button class="btn btn-primary">Submit Review</button>
+              </div>
+            </form>
+          <% } else { %>
+            <p class="text-muted">Please <a href="/login">login</a> to leave a review.</p>
+          <% } %>
         </div>
       <% } else { %>
         <p>No product found.</p>

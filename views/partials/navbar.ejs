@@ -1,12 +1,12 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
-<% 
+<%
   const hasCart = Array.isArray(cart) && cart.length > 0;
   const cartCount = hasCart ? cart.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
   const cartTotal = hasCart ? cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0;
 %>
 
-<nav class="navbar navbar-expand-sm nav-slim py-3">
+<nav class="navbar navbar-expand-sm nav-slim py-3 custom-navbar">
   <div class="container-fluid">
 
     <!-- Brand -->
@@ -46,7 +46,7 @@
                     <img src="/images/<%= item.image %>" alt="<%= item.productName %>" class="cart-thumb">
                     <div class="flex-grow-1">
                       <div class="fw-semibold"><%= item.productName %></div>
-                      <div class="text-muted small">Qty: <%= item.quantity %> · $<%= (item.price * item.quantity).toFixed(2) %></div>
+                      <div class="text-muted small">Qty: <%= item.quantity %> x $<%= (item.price * item.quantity).toFixed(2) %></div>
                     </div>
                   </div>
                 <% }) %>
@@ -69,7 +69,10 @@
 
           <!-- Logout -->
           <li class="nav-item">
-            <a class="nav-link btn btn-outline-light btn-sm rounded-pill px-3 logout-btn" href="/logout">Logout</a>
+            <a class="nav-link logout-btn d-flex align-items-center gap-1" href="/logout">
+              <i class="bi bi-box-arrow-right"></i>
+              Logout
+            </a>
           </li>
 
         <% } else { %>
@@ -118,10 +121,13 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .logout-btn { transition: all 0.3s ease; }
-  .logout-btn:hover {
-    background-color: #ffd814;
-    border-color: transparent;
-    color: #0b1c40 !important;
+  .custom-navbar {
+    background: linear-gradient(90deg, #0f1b2d 0%, #0c2d52 100%);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.18);
   }
+
+  .navbar-brand, .nav-link { color: #eaf2ff !important; }
+  .navbar-brand:hover, .nav-link:hover { color: #ffd166 !important; }
+
+  .logout-btn { transition: color 0.3s ease; }
 </style>

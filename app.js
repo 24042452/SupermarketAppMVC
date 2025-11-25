@@ -43,17 +43,20 @@ app.use(flash());
 // Home + Products
 app.get('/', ProductController.showAllProducts);
 app.get('/product/:id', ProductController.showProductById);
+app.post('/product/:id/review', checkAuthenticated, ProductController.addReview);
 
 // ===========================
 //        ADMIN ROUTES
 // ===========================
 app.get('/admin', checkAuthenticated, checkAdmin, AdminController.showDashboard);
 app.get('/admin/users', checkAuthenticated, checkAdmin, AdminController.manageUsers);
+app.post('/admin/users', checkAuthenticated, checkAdmin, AdminController.createUser);
 app.post('/admin/users/:id/delete', checkAuthenticated, checkAdmin, AdminController.deleteUser);
 app.get('/admin/orders', checkAuthenticated, checkAdmin, AdminController.manageOrders);
 app.post('/admin/orders/:id/status', checkAuthenticated, checkAdmin, AdminController.updateOrderStatus);
 
 app.get('/inventory', checkAuthenticated, checkAdmin, ProductController.showAllProducts);
+app.post('/inventory/:id/stock', checkAuthenticated, checkAdmin, ProductController.updateStock);
 
 app.get('/addProduct', checkAuthenticated, checkAdmin, (req, res) => {
     res.render('addProduct', { user: req.session.user });
@@ -97,43 +100,14 @@ app.get('/logout', (req, res) => {
 //          CART ROUTES
 // ===========================
 app.get('/cart', orderController.viewCart);
-
-// Add to cart → ALWAYS REDIRECT BACK TO SHOPPING
-app.post('/add-to-cart/:id', (req, res) => {
-    const productId = req.params.id;
-    const qty = parseInt(req.body.quantity) || 1;
-
-    if (!req.session.cart) req.session.cart = [];
-    const cart = req.session.cart;
-
-    const existingItem = cart.find(item => item.id == productId);
-    if (existingItem) {
-        existingItem.quantity += qty;
-        return res.redirect('/');
-    }
-
-    const ProductModel = require('./models/productModel');
-    ProductModel.getProductById(productId, (err, results) => {
-        if (err || results.length === 0) return res.redirect('/');
-        const product = results[0];
-
-        cart.push({
-            id: product.id,
-            productName: product.productName,
-            price: product.price,
-            quantity: qty,
-            image: product.image
-        });
-
-        res.redirect('/');
-    });
-});
+app.post('/add-to-cart/:id', orderController.addToCart);
+app.post('/cart/update/:id', orderController.updateCartItem);
 
 // Remove a single item
 app.post('/cart/remove/:id', (req, res) => {
-    const productId = req.params.id;
+    const productId = parseInt(req.params.id, 10);
     if (req.session.cart) {
-        req.session.cart = req.session.cart.filter(item => item.id != productId);
+        req.session.cart = req.session.cart.filter(item => (item.id || item.productId) != productId);
     }
     res.redirect('/cart');
 });

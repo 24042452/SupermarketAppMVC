@@ -2,15 +2,15 @@ const UserModel = require('../models/userModel');
 
 // Register user
 const registerUser = (req, res) => {
-    const { username, email, password, address, contact, role } = req.body;
+    const { username, email, password, address, contact } = req.body;
 
-    if (!username || !email || !password || !address || !contact || !role) {
+    if (!username || !email || !password || !address || !contact) {
         req.flash('error', 'All fields are required.');
         req.flash('formData', req.body);
         return res.redirect('/register');
     }
 
-    UserModel.addUser(username, email, password, address, contact, role, (err) => {
+    UserModel.addUser(username, email, password, address, contact, 'user', (err) => {
         if (err) return res.status(500).send('Error registering user');
         req.flash('success', 'Registration successful! Please login.');
         res.redirect('/login');

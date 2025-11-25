@@ -40,7 +40,12 @@ const showDashboard = (req, res) => {
 const manageUsers = (req, res) => {
     UserModel.getAllUsers((err, users) => {
         if (err) return res.status(500).send('Error loading users');
-        res.render('adminUsers', { user: req.session.user, users });
+        res.render('adminUsers', { 
+            user: req.session.user, 
+            users,
+            messages: req.flash('error'),
+            success: req.flash('success')
+        });
     });
 };
 
@@ -53,6 +58,29 @@ const deleteUser = (req, res) => {
 
     UserModel.deleteUser(userId, (err) => {
         if (err) return res.status(500).send('Error deleting user');
+        res.redirect('/admin/users');
+    });
+};
+
+// Create user (admin only; can create admin accounts)
+const createUser = (req, res) => {
+    const { username, email, password, address, contact, role } = req.body;
+    const allowedRoles = ['user', 'admin'];
+
+    if (!username || !email || !password || !address || !contact) {
+        req.flash('error', 'All fields are required.');
+        return res.redirect('/admin/users');
+    }
+
+    const finalRole = allowedRoles.includes(role) ? role : 'user';
+
+    UserModel.addUser(username, email, password, address, contact, finalRole, (err) => {
+        if (err) {
+            console.error('Error creating user:', err);
+            req.flash('error', 'Could not create user (email may already exist).');
+            return res.redirect('/admin/users');
+        }
+        req.flash('success', `User created as ${finalRole}.`);
         res.redirect('/admin/users');
     });
 };
@@ -90,5 +118,6 @@ module.exports = {
     manageUsers,
     deleteUser,
     manageOrders,
-    updateOrderStatus
+    updateOrderStatus,
+    createUser
 };

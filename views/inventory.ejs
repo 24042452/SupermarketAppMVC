@@ -16,9 +16,20 @@
       <div>
         <p class="mb-1">Welcome, <%= user.username %> (<%= user.role %>)</p>
         <h3 class="mb-0">Products</h3>
+        <% if (lowStockCount && lowStockCount > 0) { %>
+          <div class="alert alert-warning py-2 px-3 mt-2 mb-0">
+            <strong><%= lowStockCount %></strong> item(s) are below the <%= lowStockThreshold %> stock threshold.
+          </div>
+        <% } %>
       </div>
       <a href="/addProduct" class="btn btn-primary">Add Product</a>
     </div>
+    <% if (messages && messages.length) { %>
+      <div class="alert alert-danger"><%= messages.join('<br>') %></div>
+    <% } %>
+    <% if (success && success.length) { %>
+      <div class="alert alert-success"><%= success.join('<br>') %></div>
+    <% } %>
     <form class="soft-card p-3 mb-3" method="GET" action="/inventory">
       <div class="row g-2 align-items-center">
         <div class="col-md-5">
@@ -53,6 +64,7 @@
             <th width="100">Product Name</th>
             <th width="100">Product Image</th>
             <th width="50">Quantity</th>
+            <th width="90">Update Stock</th>
             <th width="50">Price</th>
             <th width="50">Edit</th>
             <th width="50">Delete</th>
@@ -60,10 +72,23 @@
       </thead>
       <tbody>
         <% for(let i=0; i < products.length; i++) { %>
-          <tr>
+          <tr class="<%= products[i].isLowStock ? 'table-warning' : '' %>">
             <td><a href="/product/<%= products[i].id %>" ><%= products[i].productName %></a></td>
             <td><img src = "images/<%= products[i].image %>" width="20%"></td>
-            <td><%= products[i].quantity %></td>
+            <td>
+              <div class="d-flex justify-content-center align-items-center gap-2">
+                <span class="fw-semibold"><%= products[i].quantity %></span>
+                <% if (products[i].isLowStock) { %>
+                  <span class="badge bg-warning text-dark">Low</span>
+                <% } %>
+              </div>
+            </td>
+            <td>
+              <form action="/inventory/<%= products[i].id %>/stock" method="POST" class="d-flex gap-2 justify-content-center">
+                <input type="number" class="form-control form-control-sm" name="quantity" min="0" value="<%= products[i].quantity %>" style="width:90px">
+                <button class="btn btn-sm btn-outline-primary">Update</button>
+              </form>
+            </td>
             <td>$<%= products[i].price.toFixed(2) %></td>
             <!-- Edit Link -->
             <td><a href="/updateProduct/<%= products[i].id %>">Edit</a></td>

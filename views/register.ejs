@@ -86,14 +86,6 @@
                             value="<%= formData ? formData.contact : '' %>">
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Role</label>
-                        <select id="role" name="role" class="form-control p-2" required>
-                            <option value="user" <%= formData && formData.role === 'user' ? 'selected' : '' %>>User</option>
-                            <option value="admin" <%= formData && formData.role === 'admin' ? 'selected' : '' %>>Admin</option>
-                        </select>
-                    </div>
-
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mt-2">
                         Register
                     </button>

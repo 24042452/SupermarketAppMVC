@@ -144,6 +144,14 @@
       margin-top: 10px;
       gap: 10px;
     }
+
+    .order-total {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0b1c40;
+      text-align: right;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -154,6 +162,12 @@
 
     <h2 class="section-title text-center">Your Orders</h2>
     <p class="section-subtitle text-center">Track your latest purchases, delivery status, and items at a glance.</p>
+    <% if (messages && messages.length) { %>
+      <div class="alert alert-danger"><%= messages.join('<br>') %></div>
+    <% } %>
+    <% if (success && success.length) { %>
+      <div class="alert alert-success"><%= success.join('<br>') %></div>
+    <% } %>
 
     <% if (orders.length === 0) { %>
       <p class="text-center text-muted">You have no orders yet.</p>
@@ -171,7 +185,7 @@
 
             <div>
               <span>Total:</span><br>
-              <small>$<%= order.total %></small>
+              <small>$<%= Number(order.total || 0).toFixed(2) %></small>
             </div>
 
             <div>
@@ -187,14 +201,16 @@
           <!-- Status Badge -->
           <% 
             let statusClass = '';
-            const statusLower = order.status.toLowerCase();
+            const statusLower = (order.status || '').toLowerCase();
             if(statusLower === 'pending') statusClass = 'status-pending';
             else if(statusLower === 'delivery') statusClass = 'status-delivery';
             else if(statusLower === 'delivered') statusClass = 'status-delivered';
 
-            let statusLabel = order.status;
+            let statusLabel = order.status || 'Pending';
             if(statusLower === 'delivery') statusLabel = 'Delivery';
             else if(statusLower === 'delivered') statusLabel = 'Delivered';
+            else if(statusLower === 'pending') statusLabel = 'Pending';
+            else statusLabel = statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1);
           %>
           <p class="status-badge <%= statusClass %>">
             <i class="bi bi-truck"></i>
@@ -202,15 +218,20 @@
           </p>
 
           <!-- Products -->
-          <% order.items.forEach(item => { %>
+          <% let grandTotal = 0; %>
+          <% order.items.forEach(item => { 
+               const lineTotal = Number(item.quantity) * Number(item.price || item.price_each || 0);
+               grandTotal += lineTotal;
+          %>
             <div class="product-item">
               <img src="/images/<%= item.image %>" alt="<%= item.productName %>">
               <div class="flex-grow-1">
                 <p class="product-title"><%= item.productName %></p>
-                <p class="product-quantity">Quantity: <%= item.quantity %></p>
+                <p class="product-quantity">Quantity: <%= item.quantity %> &nbsp;|&nbsp; Total: $<%= lineTotal.toFixed(2) %></p>
               </div>
             </div>
           <% }) %>
+          <div class="order-total">Grand Total: $<%= grandTotal.toFixed(2) %></div>
 
           <!-- Footer Buttons -->
           <div class="order-footer">

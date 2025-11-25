@@ -1,4 +1,7 @@
 const ProductModel = require('../models/productModel');
+const ReviewModel = require('../models/reviewModel');
+
+const LOW_STOCK_THRESHOLD = 10;
 
 // Derive a simple category from product data or name keywords
 const getCategory = (product) => {
@@ -27,20 +30,17 @@ const showAllProducts = (req, res) => {
 
         let filteredProducts = results;
 
-        // If search term exists → filter by product name
         if (search && search.trim() !== "") {
             const term = search.toLowerCase();
             filteredProducts = results.filter(p =>
-                p.productName.toLowerCase().includes(term)
+                (p.productName || '').toLowerCase().includes(term)
             );
         }
 
-        // Filter by category derived from product name/field
         if (categoryFilter) {
             filteredProducts = filteredProducts.filter(p => getCategory(p) === categoryFilter);
         }
 
-        // Sort results
         if (sort === 'price-asc') {
             filteredProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
         } else if (sort === 'price-desc') {
@@ -51,20 +51,30 @@ const showAllProducts = (req, res) => {
             filteredProducts = filteredProducts.slice().sort((a, b) => b.productName.localeCompare(a.productName));
         }
 
-        // Admin sees inventory page
+        const productsWithStock = filteredProducts.map(p => ({
+            ...p,
+            price: Number(p.price) || 0,
+            quantity: Number(p.quantity) || 0,
+            isLowStock: p.quantity <= LOW_STOCK_THRESHOLD
+        }));
+        const lowStockCount = productsWithStock.filter(p => p.isLowStock).length;
+
         if (req.session && req.session.user && req.session.user.role === 'admin') {
             return res.render('inventory', { 
-                products: filteredProducts, 
+                products: productsWithStock, 
                 user: req.session.user,
                 search: search || "",
                 sort,
-                category: categoryFilter
+                category: categoryFilter,
+                lowStockCount,
+                lowStockThreshold: LOW_STOCK_THRESHOLD,
+                messages: req.flash('error'),
+                success: req.flash('success')
             });
         }
 
-        // Regular user shopping page
         res.render('shopping', { 
-            products: filteredProducts,
+            products: productsWithStock,
             user: req.session.user || null,
             cart: req.session.cart || [],
             search: search || "",
@@ -84,9 +94,25 @@ const showProductById = (req, res) => {
         }
 
         if (results.length > 0) {
-            res.render('product', { 
-                product: results[0], 
-                user: req.session ? req.session.user : null 
+            ReviewModel.getReviewsByProduct(id, (reviewErr, reviews) => {
+                if (reviewErr) {
+                    console.error('Error retrieving reviews:', reviewErr);
+                    return res.status(500).send('Error retrieving product');
+                }
+
+                const averageRating = reviews.length
+                    ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+                    : null;
+
+                res.render('product', { 
+                    product: results[0], 
+                    user: req.session ? req.session.user : null,
+                    cart: req.session ? (req.session.cart || []) : [],
+                    reviews,
+                    averageRating,
+                    messages: req.flash('error'),
+                    success: req.flash('success')
+                });
             });
         } else {
             res.status(404).send('Product not found');
@@ -101,10 +127,15 @@ const addProductForm = (req, res) => {
 
 // Add new product
 const addProduct = (req, res) => {
-    const { productName, quantity, price } = req.body;
+    const { productName, name, quantity, price } = req.body;
+    const finalName = productName || name;
     const image = req.file ? req.file.filename : null;
 
-    ProductModel.addProduct(productName, quantity, price, image, (err) => {
+    if (!finalName || !quantity || !price) {
+        return res.status(400).send('All fields are required');
+    }
+
+    ProductModel.addProduct(finalName, quantity, price, image, (err) => {
         if (err) {
             console.error('Error adding product:', err);
             return res.status(500).send('Error adding product');
@@ -136,10 +167,16 @@ const editProductForm = (req, res) => {
 // Update product
 const updateProduct = (req, res) => {
     const id = req.params.id;
-    const { productName, quantity, price, currentImage } = req.body;
+    const { productName, name, quantity, price, currentImage } = req.body;
+    const finalName = productName || name;
     const image = req.file ? req.file.filename : currentImage;
 
-    ProductModel.updateProduct(id, productName, quantity, price, image, (err) => {
+    if (!finalName) {
+        req.flash('error', 'Product name is required.');
+        return res.redirect(`/updateProduct/${id}`);
+    }
+
+    ProductModel.updateProduct(id, finalName, quantity, price, image, (err) => {
         if (err) {
             console.error('Error updating product:', err);
             return res.status(500).send('Error updating product');
@@ -160,6 +197,51 @@ const deleteProduct = (req, res) => {
     });
 };
 
+// Update only stock quantity (inline admin control)
+const updateStock = (req, res) => {
+    const id = req.params.id;
+    const quantity = parseInt(req.body.quantity, 10);
+
+    if (Number.isNaN(quantity) || quantity < 0) {
+        req.flash('error', 'Quantity must be zero or more.');
+        return res.redirect('/inventory');
+    }
+
+    ProductModel.updateProductQuantity(id, quantity, (err) => {
+        if (err) {
+            console.error('Error updating stock:', err);
+            return res.status(500).send('Error updating stock');
+        }
+        req.flash('success', 'Stock updated');
+        res.redirect('/inventory');
+    });
+};
+
+// Add review for a product
+const addReview = (req, res) => {
+    const productId = req.params.id;
+    const user = req.session && req.session.user;
+    const rating = parseInt(req.body.rating, 10);
+    const comment = (req.body.comment || '').trim();
+
+    if (!user) return res.redirect('/login');
+
+    if (!rating || rating < 1 || rating > 5) {
+        req.flash('error', 'Please provide a rating between 1 and 5.');
+        return res.redirect(`/product/${productId}`);
+    }
+
+    ReviewModel.addReview(productId, user.id, rating, comment, (err) => {
+        if (err) {
+            console.error('Error saving review:', err);
+            req.flash('error', 'Unable to save review right now.');
+            return res.redirect(`/product/${productId}`);
+        }
+        req.flash('success', 'Thanks for your review!');
+        res.redirect(`/product/${productId}`);
+    });
+};
+
 module.exports = {
     showAllProducts,
     showProductById,
@@ -167,5 +249,7 @@ module.exports = {
     addProduct,
     editProductForm,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    updateStock,
+    addReview
 };
