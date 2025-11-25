@@ -160,6 +160,8 @@
 
   <div class="container my-5 page-wrapper">
 
+    <% const formatDate = (dt) => { try { return new Date(dt).toLocaleDateString('en-GB'); } catch(e) { return dt; } }; %>
+
     <h2 class="section-title text-center">Your Orders</h2>
     <p class="section-subtitle text-center">Track your latest purchases, delivery status, and items at a glance.</p>
     <% if (messages && messages.length) { %>
@@ -180,7 +182,7 @@
           <div class="order-header">
             <div>
               <span>Order Placed:</span><br>
-              <small><%= order.order_date %></small>
+              <small><%= formatDate(order.order_date) %></small>
             </div>
 
             <div>

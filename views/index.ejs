@@ -61,7 +61,7 @@
       <% if (user.role === "admin") { %>
         <p class="lead">Manage your inventory efficiently. <a href="/inventory" class="btn btn-warning btn-lg fw-bold">Go to Inventory</a></p>
       <% } else { %>
-        <p class="lead">Shop your favorite products now. <a href="/shopping" class="btn btn-warning btn-lg fw-bold">Start Shopping</a></p>
+        <p class="lead">Shop your favorite products now. <a href="/" class="btn btn-warning btn-lg fw-bold">Start Shopping</a></p>
       <% } %>
     <% } else { %>
       <p class="lead">Please <a href="/login" class="btn btn-warning btn-lg fw-bold">Login</a> or <a href="/register" class="btn btn-success btn-lg fw-bold">Register</a> to start shopping!</p>
@@ -80,7 +80,7 @@
               <h5 class="card-title"><%= product.productName %></h5>
               <p class="card-text">$<%= product.price.toFixed(2) %></p>
               <% if (user && user.role !== 'admin') { %>
-                <a href="/shopping" class="btn btn-primary">Buy Now</a>
+                <a href="/" class="btn btn-primary">Buy Now</a>
               <% } else { %>
                 <span class="text-muted">Login to buy</span>
               <% } %>

@@ -123,6 +123,7 @@
 
   <!-- Main Content -->
   <div class="container my-5 px-3 page-wrapper">
+    <% const formatDate = (dt) => { try { return new Date(dt).toLocaleDateString('en-GB'); } catch(e) { return dt; } }; %>
     <h2 class="section-title text-center">Order #<%= order.id %></h2>
     <p class="section-subtitle text-center">Review your items, prices, and delivery status.</p>
 
@@ -150,7 +151,7 @@
         <div class="order-header">
           <div>
             <span>Order Placed:</span><br>
-            <small><%= order.order_date %></small>
+            <small><%= formatDate(order.order_date) %></small>
           </div>
           <div>
             <span>Total:</span><br>
