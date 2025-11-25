@@ -88,13 +88,21 @@
               <tr><td colspan="5" class="text-center text-muted py-3">No orders yet.</td></tr>
             <% } else { %>
               <% recentOrders.forEach(o => { %>
+                <% 
+                  const statusLower = (o.status || '').toLowerCase();
+                  let statusClass = '';
+                  let statusLabel = o.status;
+                  if (statusLower === 'pending') { statusClass = 'badge-status-pending'; statusLabel = 'Pending'; }
+                  else if (statusLower === 'delivery') { statusClass = 'badge-status-delivery'; statusLabel = 'Delivery'; }
+                  else if (statusLower === 'delivered') { statusClass = 'badge-status-delivered'; statusLabel = 'Delivered'; }
+                %>
                 <tr>
                   <td><a class="table-row-link fw-semibold" href="/orders/<%= o.id %>">#<%= o.id %></a></td>
                   <td><%= o.username %> (<%= o.email %>)</td>
                   <td>$<%= o.total %></td>
                   <td><%= o.order_date %></td>
                   <td>
-                    <span class="badge bg-secondary badge-status"><%= o.status %></span>
+                    <span class="badge badge-status <%= statusClass %>"><%= statusLabel %></span>
                   </td>
                 </tr>
               <% }) %>

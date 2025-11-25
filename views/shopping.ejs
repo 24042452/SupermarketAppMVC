@@ -135,7 +135,7 @@
     <!-- SEARCH BAR -->
     <form method="GET" action="/" class="search-box mb-5">
       <div class="row g-3 align-items-center">
-        <div class="col-md-10">
+        <div class="col-lg-6">
           <input 
             type="text" 
             name="search" 
@@ -144,8 +144,26 @@
             value="<%= typeof search !== 'undefined' ? search : '' %>"
           >
         </div>
-        <div class="col-md-2 d-grid">
-          <button class="btn btn-primary btn-lg">Search</button>
+        <div class="col-lg-3">
+          <select name="category" class="form-select form-select-lg">
+            <option value="">All Types</option>
+            <option value="fruits" <%= category === 'fruits' ? 'selected' : '' %>>Fruits</option>
+            <option value="vegetable" <%= category === 'vegetable' ? 'selected' : '' %>>Vegetable</option>
+            <option value="baked" <%= category === 'baked' ? 'selected' : '' %>>Baked</option>
+            <option value="beverage" <%= category === 'beverage' ? 'selected' : '' %>>Beverage</option>
+          </select>
+        </div>
+        <div class="col-lg-2">
+          <select name="sort" class="form-select">
+            <option value="">Sort</option>
+            <option value="price-asc" <%= sort === 'price-asc' ? 'selected' : '' %>>Price: Low to High</option>
+            <option value="price-desc" <%= sort === 'price-desc' ? 'selected' : '' %>>Price: High to Low</option>
+            <option value="name-asc" <%= sort === 'name-asc' ? 'selected' : '' %>>Name: A to Z</option>
+            <option value="name-desc" <%= sort === 'name-desc' ? 'selected' : '' %>>Name: Z to A</option>
+          </select>
+        </div>
+        <div class="col-lg-1 d-grid">
+          <button class="btn btn-primary btn-lg">Apply</button>
         </div>
       </div>
     </form>

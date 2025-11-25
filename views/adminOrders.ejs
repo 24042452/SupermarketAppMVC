@@ -44,13 +44,21 @@
               <tr><td colspan="7" class="text-center text-muted py-3">No orders found.</td></tr>
             <% } else { %>
               <% orders.forEach(order => { %>
+                <% 
+                  const statusLower = (order.status || '').toLowerCase();
+                  let statusClass = '';
+                  let statusLabel = order.status;
+                  if (statusLower === 'pending') { statusClass = 'badge-status-pending'; statusLabel = 'Pending'; }
+                  else if (statusLower === 'delivery') { statusClass = 'badge-status-delivery'; statusLabel = 'Delivery'; }
+                  else if (statusLower === 'delivered') { statusClass = 'badge-status-delivered'; statusLabel = 'Delivered'; }
+                %>
                 <tr>
                   <td><a class="table-row-link" href="/orders/<%= order.id %>">#<%= order.id %></a></td>
                   <td><%= order.username %></td>
                   <td><%= order.email %></td>
                   <td>$<%= order.total %></td>
                   <td><%= order.order_date %></td>
-                  <td><span class="badge bg-secondary badge-status"><%= order.status %></span></td>
+                  <td><span class="badge badge-status <%= statusClass %>"><%= statusLabel %></span></td>
                   <td>
                     <form action="/admin/orders/<%= order.id %>/status" method="POST" class="d-flex gap-2">
                       <select name="status" class="form-select form-select-sm" required>

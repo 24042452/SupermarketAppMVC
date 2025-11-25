@@ -1,8 +1,23 @@
 const ProductModel = require('../models/productModel');
 
+// Derive a simple category from product data or name keywords
+const getCategory = (product) => {
+    const fromField = (product.category || '').toLowerCase();
+    if (fromField) return fromField;
+
+    const name = (product.productName || '').toLowerCase();
+    if (name.match(/banana|apple/)) return 'fruits';
+    if (name.match(/tomato|broccoli/)) return 'vegetable';
+    if (name.includes('bread')) return 'baked';
+    if (name.includes('milk')) return 'beverage';
+    return '';
+};
+
 // Show all products (shopping page or admin inventory)
 const showAllProducts = (req, res) => {
     const search = req.query.search;  // get ?search= keyword
+    const sort = req.query.sort || '';
+    const categoryFilter = (req.query.category || '').toLowerCase();
 
     ProductModel.getAllProducts((err, results) => {
         if (err) {
@@ -20,12 +35,30 @@ const showAllProducts = (req, res) => {
             );
         }
 
+        // Filter by category derived from product name/field
+        if (categoryFilter) {
+            filteredProducts = filteredProducts.filter(p => getCategory(p) === categoryFilter);
+        }
+
+        // Sort results
+        if (sort === 'price-asc') {
+            filteredProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
+        } else if (sort === 'price-desc') {
+            filteredProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
+        } else if (sort === 'name-asc') {
+            filteredProducts = filteredProducts.slice().sort((a, b) => a.productName.localeCompare(b.productName));
+        } else if (sort === 'name-desc') {
+            filteredProducts = filteredProducts.slice().sort((a, b) => b.productName.localeCompare(a.productName));
+        }
+
         // Admin sees inventory page
         if (req.session && req.session.user && req.session.user.role === 'admin') {
             return res.render('inventory', { 
                 products: filteredProducts, 
                 user: req.session.user,
-                search: search || ""
+                search: search || "",
+                sort,
+                category: categoryFilter
             });
         }
 
@@ -34,7 +67,9 @@ const showAllProducts = (req, res) => {
             products: filteredProducts,
             user: req.session.user || null,
             cart: req.session.cart || [],
-            search: search || ""
+            search: search || "",
+            sort,
+            category: categoryFilter
         });
     });
 };

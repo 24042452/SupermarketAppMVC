@@ -87,6 +87,9 @@ body {
   font-weight: 700;
   text-transform: capitalize;
 }
+.badge-status-pending { background: #ffe9a3; color: #8a5b00; }
+.badge-status-delivery { background: #dbeafe; color: #0f3d8a; }
+.badge-status-delivered { background: #c7f8d4; color: #146533; }
 
 .table thead th {
   color: var(--text-muted);

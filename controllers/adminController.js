@@ -14,7 +14,7 @@ const showDashboard = (req, res) => {
                 if (orderErr) return res.status(500).send('Error loading orders');
 
                 const statusCounts = orders.reduce((acc, order) => {
-                    const key = order.status || 'pending';
+                    const key = (order.status || 'pending').toLowerCase();
                     acc[key] = (acc[key] || 0) + 1;
                     return acc;
                 }, { pending: 0, delivery: 0, delivered: 0 });
