@@ -36,7 +36,7 @@ const getOrderItems = (orderId, callback) => {
 // Get full order info (header + items)
 const getOrderDetails = (orderId, callback) => {
     const sql = `
-        SELECT o.id AS orderId, o.total, o.order_date, o.status,
+        SELECT o.id AS orderId, o.user_id AS userId, o.total, o.order_date, o.status,
                oi.product_id, oi.quantity, oi.price_each,
                p.productName, p.image
         FROM orders o

@@ -198,7 +198,7 @@ const processCheckout = (req, res) => {
                     if (index === items.length) {
                         req.session.cart = [];
                         req.flash('success', 'Order placed successfully.');
-                        return res.redirect('/orders');
+                        return res.redirect(`/orders/${orderId}/invoice`);
                     }
 
                     const item = items[index];
@@ -320,6 +320,53 @@ const showOrderDetails = (req, res) => {
     });
 };
 
+// On-screen invoice for a single order
+const showInvoice = (req, res) => {
+    const orderId = req.params.id;
+    const user = req.session.user;
+
+    if (!user) return res.redirect('/login');
+
+    OrderModel.getOrderDetails(orderId, (err, rows) => {
+        if (err) throw err;
+
+        if (!rows || rows.length === 0) {
+            req.flash('error', 'Invoice not found.');
+            return res.redirect('/orders');
+        }
+
+        // Optional ownership check: ensure the order belongs to this user (skip for admin)
+        if (rows[0].userId && user.role !== 'admin' && rows[0].userId !== user.id) {
+            req.flash('error', 'You cannot view this invoice.');
+            return res.redirect('/orders');
+        }
+
+        const order = {
+            id: rows[0].orderId,
+            total: rows[0].total,
+            order_date: rows[0].order_date,
+            status: rows[0].status,
+            items: []
+        };
+
+        rows.forEach((row) => {
+            order.items.push({
+                productId: row.product_id,
+                productName: row.productName,
+                quantity: row.quantity,
+                price: row.price_each,
+                image: row.image
+            });
+        });
+
+        res.render('invoice', {
+            order,
+            user,
+            cart: req.session.cart || []
+        });
+    });
+};
+
 module.exports = {
     viewCart,
     addToCart,
@@ -327,5 +374,6 @@ module.exports = {
     showCheckout,
     processCheckout,
     showOrders,
-    showOrderDetails
+    showOrderDetails,
+    showInvoice
 };

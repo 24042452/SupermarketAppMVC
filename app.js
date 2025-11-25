@@ -131,6 +131,7 @@ app.post('/checkout', orderController.processCheckout); // Process checkout POST
 // ===========================
 app.get('/orders', orderController.showOrders);
 app.get('/orders/:id', orderController.showOrderDetails);
+app.get('/orders/:id/invoice', orderController.showInvoice);
 
 // ===========================
 //          SERVER
