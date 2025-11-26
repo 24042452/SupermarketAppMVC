@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <title>Order #<%= order.id %> | Admin</title>
+  <style>
+    body { 
+      background: radial-gradient(circle at 10% 20%, #e8f0ff 0, #f7f9fc 28%, #eef2f6 60%); 
+      color: #0f172a;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .card { border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 8px 24px rgba(15,23,42,0.08); }
+    .status-pill { border-radius: 999px; padding: 6px 14px; font-weight: 700; text-transform: capitalize; }
+    .status-pending { background: #fff4d6; color: #8a5b00; }
+    .status-delivery { background: #e4efff; color: #0f3d8a; }
+    .status-delivered { background: #d7f5df; color: #1f6b3b; }
+    .btn-cta {
+      background: linear-gradient(135deg, #2563eb, #60a5fa);
+      color: #fff;
+      border: none;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+      transition: all 0.2s ease;
+    }
+    .btn-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); color: #fff; }
+    .btn-soft {
+      background: #f1f5f9;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      transition: all 0.15s ease;
+    }
+    .btn-soft:hover { background: #e2e8f0; color: #0f172a; }
+    .btn-link-plain { color: #475569; text-decoration: none; }
+    .btn-link-plain:hover { color: #1d4ed8; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <%- include('partials/adminNavbar', { user: user }) %>
+
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0 fw-bold">Order #<%= order.id %></h3>
+        <small class="text-muted">Placed: <%= order.order_date %></small>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/admin/orders/<%= order.id %>/invoice" class="btn btn-soft d-flex align-items-center gap-1">
+          <i class="bi bi-receipt"></i> Invoice
+        </a>
+        <a href="/admin/orders" class="btn btn-link-plain d-flex align-items-center gap-1">
+          <i class="bi bi-arrow-left"></i> Back to Orders
+        </a>
+      </div>
+    </div>
+
+    <% if (messages && messages.length) { %>
+      <div class="alert alert-danger"><%= messages.join('<br>') %></div>
+    <% } %>
+    <% if (success && success.length) { %>
+      <div class="alert alert-success"><%= success.join('<br>') %></div>
+    <% } %>
+
+    <div class="card p-3 mb-3">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3">
+          <% 
+            const statusLower = (order.status || '').toLowerCase();
+            let statusClass = 'status-pending';
+            if (statusLower === 'delivery') statusClass = 'status-delivery';
+            if (statusLower === 'delivered') statusClass = 'status-delivered';
+          %>
+          <span class="status-pill <%= statusClass %>"><%= order.status %></span>
+        </div>
+        <div class="col-md-5">
+          <form class="d-flex gap-2 align-items-center" action="/admin/orders/<%= order.id %>/status" method="POST">
+            <label class="text-muted small mb-0">Change status:</label>
+            <select name="status" class="form-select form-select-sm" style="max-width: 180px;">
+              <% statuses.forEach(s => { %>
+                <option value="<%= s %>" <%= (order.status || '').toLowerCase() === s ? 'selected' : '' %>><%= s %></option>
+              <% }) %>
+            </select>
+            <input type="hidden" name="redirectTo" value="/admin/orders/<%= order.id %>">
+            <button class="btn btn-sm btn-cta">Update</button>
+          </form>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="fw-bold h5 mb-0">$<%= Number(order.total).toFixed(2) %></div>
+          <small class="text-muted">Total</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-3 mb-3">
+      <h6 class="fw-bold mb-2">Customer</h6>
+      <div class="row g-2">
+        <div class="col-md-3"><small class="text-muted">Name</small><div><%= buyer.username || 'N/A' %></div></div>
+        <div class="col-md-3"><small class="text-muted">Email</small><div><%= buyer.email || 'N/A' %></div></div>
+        <div class="col-md-3"><small class="text-muted">Contact</small><div><%= buyer.contact || 'N/A' %></div></div>
+        <div class="col-md-3"><small class="text-muted">Address</small><div><%= buyer.address || 'N/A' %></div></div>
+      </div>
+    </div>
+
+    <div class="card p-3">
+      <h6 class="fw-bold mb-3">Items</h6>
+      <% if (!order.items || order.items.length === 0) { %>
+        <p class="text-muted mb-0">No items found.</p>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th width="100">Qty</th>
+                <th width="140">Price</th>
+                <th width="140">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% order.items.forEach(item => { %>
+                <tr>
+                  <td class="d-flex align-items-center gap-2">
+                    <img src="/images/<%= item.image %>" alt="<%= item.productName %>" style="width:50px;height:50px;object-fit:contain;border:1px solid #e2e8f0;border-radius:8px;padding:6px;background:#fff;">
+                    <div class="fw-semibold"><%= item.productName %></div>
+                  </td>
+                  <td><%= item.quantity %></td>
+                  <td>$<%= Number(item.price).toFixed(2) %></td>
+                  <td>$<%= (Number(item.price) * Number(item.quantity)).toFixed(2) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

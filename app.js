@@ -53,8 +53,11 @@ app.post('/reviews/:id/reply', checkAuthenticated, checkAdmin, ProductController
 app.get('/admin', checkAuthenticated, checkAdmin, AdminController.showDashboard);
 app.get('/admin/users', checkAuthenticated, checkAdmin, AdminController.manageUsers);
 app.post('/admin/users', checkAuthenticated, checkAdmin, AdminController.createUser);
+app.post('/admin/users/:id', checkAuthenticated, checkAdmin, AdminController.updateUser);
 app.post('/admin/users/:id/delete', checkAuthenticated, checkAdmin, AdminController.deleteUser);
 app.get('/admin/orders', checkAuthenticated, checkAdmin, AdminController.manageOrders);
+app.get('/admin/orders/:id', checkAuthenticated, checkAdmin, AdminController.showOrderDetail);
+app.get('/admin/orders/:id/invoice', checkAuthenticated, checkAdmin, orderController.showInvoice);
 app.post('/admin/orders/:id/status', checkAuthenticated, checkAdmin, AdminController.updateOrderStatus);
 
 app.get('/inventory', checkAuthenticated, checkAdmin, ProductController.showAllProducts);

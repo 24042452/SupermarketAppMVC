@@ -369,18 +369,20 @@ const showInvoice = (req, res) => {
 
     if (!user) return res.redirect('/login');
 
+    const fallback = user && user.role === 'admin' ? '/admin/orders' : '/orders';
+
     OrderModel.getOrderDetails(orderId, (err, rows) => {
         if (err) throw err;
 
         if (!rows || rows.length === 0) {
             req.flash('error', 'Invoice not found.');
-            return res.redirect('/orders');
+            return res.redirect(fallback);
         }
 
         // Optional ownership check: ensure the order belongs to this user (skip for admin)
         if (rows[0].userId && user.role !== 'admin' && rows[0].userId !== user.id) {
             req.flash('error', 'You cannot view this invoice.');
-            return res.redirect('/orders');
+            return res.redirect(fallback);
         }
 
         const order = {
