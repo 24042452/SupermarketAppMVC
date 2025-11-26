@@ -49,7 +49,7 @@ const getOrderDetails = (orderId, callback) => {
 
 // Admin: Get all orders with user info
 const getAllOrders = (callback) => {
-    const sql = `SELECT o.*, u.username, u.email 
+    const sql = `SELECT o.*, u.username, u.email, u.address
                  FROM orders o
                  JOIN users u ON o.user_id = u.id
                  ORDER BY o.order_date DESC`;

@@ -103,30 +103,40 @@
       </div>
     </form>
     <div class="page-card">
-    <table class="table table-hover align-middle small text-center mb-0">
-      <thead>
-          <tr>
-            <th width="100">Product Name</th>
-            <th width="100">Product Image</th>
-            <th width="50">Quantity</th>
-            <th width="90">Update Stock</th>
-            <th width="50">Price</th>
-            <th width="50">Edit</th>
-            <th width="50">Delete</th>
-          </tr>
+        <table class="table table-hover align-middle small text-center mb-0">
+          <thead>
+              <tr>
+                <th width="100">Product Name</th>
+                <th width="100">Product Image</th>
+                <th width="50">Quantity</th>
+                <th width="80">Status</th>
+                <th width="90">Update Stock</th>
+                <th width="50">Price</th>
+                <th width="50">Edit</th>
+                <th width="50">Delete</th>
+              </tr>
       </thead>
       <tbody>
         <% for(let i=0; i < products.length; i++) { %>
-          <tr class="<%= products[i].isLowStock ? 'table-warning' : '' %>">
+          <% const qty = products[i].quantity; %>
+          <% const noStock = qty <= 0; %>
+          <% const lowStock = !noStock && qty <= 15; %>
+          <tr class="<%= lowStock ? 'table-warning' : '' %>">
             <td><a href="/product/<%= products[i].id %>" ><%= products[i].productName %></a></td>
             <td><img src = "images/<%= products[i].image %>" width="20%"></td>
             <td>
               <div class="d-flex justify-content-center align-items-center gap-2">
-                <span class="fw-semibold"><%= products[i].quantity %></span>
-                <% if (products[i].isLowStock) { %>
-                  <span class="badge bg-warning text-dark">Low</span>
-                <% } %>
+                <span class="fw-semibold"><%= qty %></span>
               </div>
+            </td>
+            <td>
+              <% if (noStock) { %>
+                <span class="badge bg-danger text-white">No stock</span>
+              <% } else if (lowStock) { %>
+                <span class="badge bg-warning text-dark">Low stock</span>
+              <% } else { %>
+                <span class="badge bg-success-subtle text-success">In stock</span>
+              <% } %>
             </td>
             <td>
               <form action="/inventory/<%= products[i].id %>/stock" method="POST" class="d-flex gap-2 justify-content-center">

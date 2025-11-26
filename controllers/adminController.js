@@ -72,10 +72,30 @@ const deleteUser = (req, res) => {
             return res.redirect('/admin/users');
         }
 
-        UserModel.deleteUser(userId, (deleteErr) => {
-            if (deleteErr) return res.status(500).send('Error deleting user');
-            req.flash('success', 'User deleted.');
-            res.redirect('/admin/users');
+        OrderModel.getOrdersByUser(userId, (orderErr, orders) => {
+            if (orderErr) {
+                console.error('Error checking user orders before delete:', orderErr);
+                return res.status(500).send('Error deleting user');
+            }
+
+            const hasOrders = Array.isArray(orders) && orders.length > 0;
+
+            if (!hasOrders) {
+                UserModel.deleteUser(userId, (deleteErr) => {
+                    if (deleteErr) return res.status(500).send('Error deleting user');
+                    req.flash('success', 'User deleted.');
+                    res.redirect('/admin/users');
+                });
+            } else {
+                UserModel.anonymizeUser(userId, target, (anonErr) => {
+                    if (anonErr) {
+                        console.error('Error anonymizing user:', anonErr);
+                        return res.status(500).send('Error deleting user');
+                    }
+                    req.flash('success', 'User removed but order history and details kept.');
+                    res.redirect('/admin/users');
+                });
+            }
         });
     });
 };

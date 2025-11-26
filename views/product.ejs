@@ -55,6 +55,8 @@
 
   <% const isAdmin = user && user.role === "admin"; %>
   <% const formatDate = (dt) => { try { return new Date(dt).toLocaleDateString('en-GB'); } catch(e) { return dt; } }; %>
+  <% const outOfStock = product && product.quantity <= 0; %>
+  <% const lowStock = product && !outOfStock && product.quantity < 10; %>
 
   <div class="container py-4">
     <div class="product-card">
@@ -78,7 +80,15 @@
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <h4 class="fw-bold mb-2"><%= product.productName %></h4>
-                <p class="text-muted mb-2">Stock: <strong><%= product.quantity %></strong></p>
+                <div class="d-flex align-items-center gap-2">
+                  <p class="text-muted mb-2">Stock: <strong><%= product.quantity %></strong></p>
+                  <% if (lowStock) { %>
+                    <span class="badge bg-warning text-dark">Low stock</span>
+                  <% } %>
+                  <% if (outOfStock) { %>
+                    <span class="badge bg-danger">Out of stock</span>
+                  <% } %>
+                </div>
               </div>
               <% if (averageRating) { %>
                 <div class="text-end">
@@ -96,7 +106,7 @@
               <% if (!isAdmin) { %>
                 <form action="/add-to-cart/<%= product.id %>" method="POST" class="d-flex gap-2">
                   <input type="hidden" name="quantity" value="1">
-                  <button class="btn btn-primary px-3">Add to Cart</button>
+                  <button class="btn btn-primary px-3" <%= outOfStock ? 'disabled' : '' %>>Add to Cart</button>
                 </form>
               <% } %>
             </div>

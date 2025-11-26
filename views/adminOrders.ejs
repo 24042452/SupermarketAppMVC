@@ -40,6 +40,7 @@
               <th>ID</th>
               <th>User</th>
               <th>Email</th>
+              <th>Address</th>
               <th>Total</th>
               <th>Date</th>
               <th>Status</th>
@@ -64,6 +65,7 @@
                   <td><a class="table-row-link" href="/admin/orders/<%= order.id %>">#<%= order.id %></a></td>
                   <td><%= order.username %></td>
                   <td><%= order.email %></td>
+                  <td><%= order.address || 'N/A' %></td>
                   <td>$<%= order.total %></td>
                   <td><%= order.order_date %></td>
                   <td><span class="badge badge-status <%= statusClass %>"><%= statusLabel %></span></td>

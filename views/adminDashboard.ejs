@@ -78,6 +78,7 @@
             <tr>
               <th>ID</th>
               <th>User</th>
+              <th>Address</th>
               <th>Total</th>
               <th>Date</th>
               <th>Status</th>
@@ -85,7 +86,7 @@
           </thead>
           <tbody>
             <% if (recentOrders.length === 0) { %>
-              <tr><td colspan="5" class="text-center text-muted py-3">No orders yet.</td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-3">No orders yet.</td></tr>
             <% } else { %>
               <% recentOrders.forEach(o => { %>
                 <% 
@@ -99,6 +100,7 @@
                 <tr>
                   <td><a class="table-row-link fw-semibold" href="/orders/<%= o.id %>">#<%= o.id %></a></td>
                   <td><%= o.username %> (<%= o.email %>)</td>
+                  <td><%= o.address || 'N/A' %></td>
                   <td>$<%= o.total %></td>
                   <td><%= o.order_date %></td>
                   <td>

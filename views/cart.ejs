@@ -141,9 +141,20 @@
                 <p class="subtotal">
                   Subtotal: $<%= (Number(item.price) * item.quantity).toFixed(2) %>
                 </p>
-                <div class="d-flex gap-2 align-items-center mt-2">
+                <div class="d-flex gap-2 align-items-center mt-2 flex-wrap">
                   <form action="/cart/update/<%= item.id || item.productId %>" method="POST" class="d-flex gap-2 align-items-center">
-                    <input type="number" name="quantity" min="1" class="form-control form-control-sm" style="width:90px" value="<%= item.quantity %>">
+                    <div class="input-group input-group-sm" style="width: 160px;">
+                      <button type="button" class="btn btn-outline-secondary btn-qty-change" data-change="-1">-</button>
+                      <input 
+                        type="number" 
+                        name="quantity" 
+                        min="1" 
+                        step="1" 
+                        inputmode="numeric"
+                        class="form-control text-center" 
+                        value="<%= item.quantity %>">
+                      <button type="button" class="btn btn-outline-secondary btn-qty-change" data-change="1">+</button>
+                    </div>
                     <button class="btn btn-primary btn-sm btn-action">Update</button>
                   </form>
                   <form action="/cart/remove/<%= item.id || item.productId %>" method="POST">
@@ -191,4 +202,17 @@
   </div>
 
 </body>
+<script>
+  // Simple quantity +/- controls enforcing minimum of 1
+  document.querySelectorAll('.btn-qty-change').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const input = e.target.closest('.input-group').querySelector('input[name="quantity"]');
+      if (!input) return;
+      const delta = Number(e.target.dataset.change || 0);
+      const current = Number(input.value) || 1;
+      const next = Math.max(1, current + delta);
+      input.value = next;
+    });
+  });
+</script>
 </html>

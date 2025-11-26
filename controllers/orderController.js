@@ -68,6 +68,11 @@ const addToCart = (req, res) => {
         const existingQty = existingItem ? existingItem.quantity : 0;
         const available = product.quantity;
 
+        if (available <= 0) {
+            req.flash('error', `${product.productName} is out of stock right now.`);
+            return res.redirect('/cart');
+        }
+
         if (existingQty >= available) {
             req.flash('error', `Only ${available} left for ${product.productName}.`);
             return res.redirect('/cart');

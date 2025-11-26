@@ -24,6 +24,28 @@ const updateUser = (userId, username, email, password, address, contact, role, c
     db.query(sql, [username, email, password, address, contact, role, userId], callback);
 };
 
+// Anonymize user but keep record and original details for order history
+const anonymizeUser = (userId, originalUser, callback) => {
+    const safeUser = originalUser || {};
+    const username = safeUser.username ? `${safeUser.username} (deleted)` : `Deleted User #${userId}`;
+    const email = safeUser.email || `deleted_user_${userId}@example.com`;
+    const address = safeUser.address || '';
+    const contact = safeUser.contact || '';
+    const sql = `
+        UPDATE users
+        SET username = ?, email = ?, password = ?, address = ?, contact = ?, role = ?
+        WHERE id = ?`;
+    db.query(sql, [
+        username,
+        email,
+        '__deleted__',
+        address,
+        contact,
+        'deleted',
+        userId
+    ], callback);
+};
+
 // Delete user
 const deleteUser = (userId, callback) => {
     const sql = 'DELETE FROM users WHERE id = ?';
@@ -36,4 +58,5 @@ module.exports = {
     addUser,
     updateUser,
     deleteUser,
+    anonymizeUser,
 };
