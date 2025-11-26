@@ -18,19 +18,20 @@ CREATE TABLE `products` (
   `quantity` int NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `image` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  PRIMARY KEY (`id`)
+  `category` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table `products`
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
 INSERT INTO `products` VALUES
-  (1,'Apples',50,1.50,'apples.png'),
-  (2,'Bananas',75,0.80,'bananas.png'),
-  (3,'Milk',50,3.50,'milk.png'),
-  (4,'Bread',80,1.80,'bread.png'),
-  (14,'Tomatoes',80,1.50,'tomatoes.png'),
-  (19,'Broccoli',100,5.00,'Broccoli.png');
+  (1,'Apples',50,1.50,'apples.png','fruits'),
+  (2,'Bananas',75,0.80,'bananas.png','fruits'),
+  (3,'Milk',50,3.50,'milk.png','beverage'),
+  (4,'Bread',80,1.80,'bread.png','baked'),
+  (14,'Tomatoes',80,1.50,'tomatoes.png','vegetable'),
+  (19,'Broccoli',100,5.00,'Broccoli.png','vegetable');
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 

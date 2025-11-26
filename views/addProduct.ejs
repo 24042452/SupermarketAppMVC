@@ -54,6 +54,17 @@
           <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
         </div>
 
+        <div class="col-md-6">
+          <label for="category" class="form-label fw-semibold">Category</label>
+          <select class="form-select" id="category" name="category" required>
+            <option value="">Select a category</option>
+            <option value="fruits">Fruits</option>
+            <option value="vegetable">Vegetable</option>
+            <option value="baked">Baked</option>
+            <option value="beverage">Beverage</option>
+          </select>
+        </div>
+
         <div class="col-12">
           <label for="image" class="form-label fw-semibold">Product Image</label>
           <input class="form-control" type="file" id="image" name="image" accept="image/*" required>

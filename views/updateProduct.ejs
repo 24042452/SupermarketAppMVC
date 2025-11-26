@@ -54,6 +54,18 @@
           <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" value="<%= product.price %>" required>
         </div>
 
+        <% const catValue = (product.category || '').toLowerCase(); %>
+        <div class="mb-3">
+          <label for="category" class="form-label">Category</label>
+          <select class="form-select" id="category" name="category">
+            <option value="">Select a category</option>
+            <option value="fruits" <%= catValue === 'fruits' ? 'selected' : '' %>>Fruits</option>
+            <option value="vegetable" <%= catValue === 'vegetable' ? 'selected' : '' %>>Vegetable</option>
+            <option value="baked" <%= catValue === 'baked' ? 'selected' : '' %>>Baked</option>
+            <option value="beverage" <%= catValue === 'beverage' ? 'selected' : '' %>>Beverage</option>
+          </select>
+        </div>
+
         <div class="mb-3">
           <label class="form-label">Current Image</label>
           <input type="text" class="form-control" name="currentImage" value="<%= product.image %>" readonly>

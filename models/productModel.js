@@ -12,16 +12,28 @@ const getProductById = (id, callback) => {
     db.query(sql, [id], callback);
 };
 
-// Add new product
-const addProduct = (name, quantity, price, image, callback) => {
-    const sql = 'INSERT INTO products (productName, quantity, price, image) VALUES (?, ?, ?, ?)';
-    db.query(sql, [name, quantity, price, image], callback);
+// Add new product (falls back if category column is missing)
+const addProduct = (name, quantity, price, image, category, callback) => {
+    const sqlWithCategory = 'INSERT INTO products (productName, quantity, price, image, category) VALUES (?, ?, ?, ?, ?)';
+    db.query(sqlWithCategory, [name, quantity, price, image, category], (err, result) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            const sqlFallback = 'INSERT INTO products (productName, quantity, price, image) VALUES (?, ?, ?, ?)';
+            return db.query(sqlFallback, [name, quantity, price, image], callback);
+        }
+        return callback(err, result);
+    });
 };
 
 // Update product
-const updateProduct = (id, name, quantity, price, image, callback) => {
-    const sql = 'UPDATE products SET productName = ?, quantity = ?, price = ?, image = ? WHERE id = ?';
-    db.query(sql, [name, quantity, price, image, id], callback);
+const updateProduct = (id, name, quantity, price, image, category, callback) => {
+    const sqlWithCategory = 'UPDATE products SET productName = ?, quantity = ?, price = ?, image = ?, category = ? WHERE id = ?';
+    db.query(sqlWithCategory, [name, quantity, price, image, category, id], (err, result) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            const sqlFallback = 'UPDATE products SET productName = ?, quantity = ?, price = ?, image = ? WHERE id = ?';
+            return db.query(sqlFallback, [name, quantity, price, image, id], callback);
+        }
+        return callback(err, result);
+    });
 };
 
 // Delete product

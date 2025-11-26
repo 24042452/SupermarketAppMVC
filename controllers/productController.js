@@ -2,6 +2,12 @@ const ProductModel = require('../models/productModel');
 const ReviewModel = require('../models/reviewModel');
 
 const LOW_STOCK_THRESHOLD = 10;
+const CATEGORY_OPTIONS = ['fruits', 'vegetable', 'baked', 'beverage'];
+
+const normalizeCategory = (raw) => {
+    const val = (raw || '').toString().toLowerCase().trim();
+    return CATEGORY_OPTIONS.includes(val) ? val : '';
+};
 
 // Derive a simple category from product data or name keywords
 const getCategory = (product) => {
@@ -127,15 +133,16 @@ const addProductForm = (req, res) => {
 
 // Add new product
 const addProduct = (req, res) => {
-    const { productName, name, quantity, price } = req.body;
+    const { productName, name, quantity, price, category } = req.body;
     const finalName = productName || name;
     const image = req.file ? req.file.filename : null;
+    const finalCategory = normalizeCategory(category);
 
     if (!finalName || !quantity || !price) {
         return res.status(400).send('All fields are required');
     }
 
-    ProductModel.addProduct(finalName, quantity, price, image, (err) => {
+    ProductModel.addProduct(finalName, quantity, price, image, finalCategory, (err) => {
         if (err) {
             console.error('Error adding product:', err);
             return res.status(500).send('Error adding product');
@@ -167,16 +174,17 @@ const editProductForm = (req, res) => {
 // Update product
 const updateProduct = (req, res) => {
     const id = req.params.id;
-    const { productName, name, quantity, price, currentImage } = req.body;
+    const { productName, name, quantity, price, currentImage, category } = req.body;
     const finalName = productName || name;
     const image = req.file ? req.file.filename : currentImage;
+    const finalCategory = normalizeCategory(category);
 
     if (!finalName) {
         req.flash('error', 'Product name is required.');
         return res.redirect(`/updateProduct/${id}`);
     }
 
-    ProductModel.updateProduct(id, finalName, quantity, price, image, (err) => {
+    ProductModel.updateProduct(id, finalName, quantity, price, image, finalCategory, (err) => {
         if (err) {
             console.error('Error updating product:', err);
             return res.status(500).send('Error updating product');

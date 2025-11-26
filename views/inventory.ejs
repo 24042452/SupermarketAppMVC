@@ -107,6 +107,7 @@
           <thead>
               <tr>
                 <th width="100">Product Name</th>
+                <th width="90">Category</th>
                 <th width="100">Product Image</th>
                 <th width="50">Quantity</th>
                 <th width="80">Status</th>
@@ -117,12 +118,25 @@
               </tr>
       </thead>
       <tbody>
+        <% const getCategoryFromName = (p) => {
+             const name = (p.productName || '').toLowerCase();
+             const direct = (p.category || '').toLowerCase();
+             if (direct) return direct;
+             if (name.match(/banana|apple/)) return 'fruits';
+             if (name.match(/tomato|broccoli/)) return 'vegetable';
+             if (name.includes('bread')) return 'baked';
+             if (name.includes('milk')) return 'beverage';
+             return 'n/a';
+           };
+        %>
         <% for(let i=0; i < products.length; i++) { %>
           <% const qty = products[i].quantity; %>
           <% const noStock = qty <= 0; %>
           <% const lowStock = !noStock && qty <= 15; %>
+          <% const category = getCategoryFromName(products[i]); %>
           <tr class="<%= lowStock ? 'table-warning' : '' %>">
             <td><a href="/product/<%= products[i].id %>" ><%= products[i].productName %></a></td>
+            <td class="text-capitalize"><%= category %></td>
             <td><img src = "images/<%= products[i].image %>" width="20%"></td>
             <td>
               <div class="d-flex justify-content-center align-items-center gap-2">

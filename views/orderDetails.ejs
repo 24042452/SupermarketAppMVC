@@ -114,6 +114,19 @@
       margin-top: 18px;
       text-align: right;
     }
+
+    .btn-soft {
+      background: #f1f5f9;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      transition: all 0.18s ease;
+      font-weight: 700;
+    }
+
+    .btn-soft:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
   </style>
 </head>
 <body>
@@ -191,6 +204,10 @@
 
         <div class="order-total">Grand Total: $<%= grandTotal.toFixed(2) %></div>
         <div class="mt-3 d-flex gap-2 justify-content-end">
+          <a href="/orders/<%= order.id %>/invoice" class="btn btn-soft d-inline-flex align-items-center gap-2">
+            <i class="bi bi-receipt"></i>
+            Invoice
+          </a>
           <a href="/" class="btn btn-outline-primary">Back to Home</a>
           <a href="/orders" class="btn btn-primary">Back to Order History</a>
         </div>
