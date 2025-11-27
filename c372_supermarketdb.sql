@@ -58,7 +58,8 @@ INSERT INTO `users` VALUES
   (2,'Mary Tan','mary@mary.com','password','Tampines Ave 1','12345678','user'),
   (3,'bobochan','bobochan@gmail.com','password','Woodlands','98765432','user'),
   (4,'sarahlee','sarahlee@gmail.com','password','Woodlands','98765432','user'),
-  (5,'admin1','admin1@admin.com','123456','woodlands ave 2','87654321','admin');
+  (5,'admin1','admin1@admin.com','123456','woodlands ave 2','87654321','admin'),
+  (6,'Super Admin','superadmin@admin.com','123456','Headquarters','00000000','superadmin');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 

@@ -10,9 +10,23 @@ const getCartItemsWithProduct = (userId, callback) => {
                p.image
         FROM cart_items ci
         JOIN products p ON ci.product_id = p.id
-        WHERE ci.user_id = ?
+        WHERE ci.user_id = ? AND COALESCE(p.is_deleted, 0) = 0
     `;
-    db.query(sql, [userId], callback);
+    db.query(sql, [userId], (err, rows) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            return db.query(`
+                SELECT ci.product_id AS productId,
+                       ci.quantity,
+                       p.productName,
+                       p.price,
+                       p.image
+                FROM cart_items ci
+                JOIN products p ON ci.product_id = p.id
+                WHERE ci.user_id = ?
+            `, [userId], callback);
+        }
+        callback(err, rows);
+    });
 };
 
 // Upsert a cart item quantity

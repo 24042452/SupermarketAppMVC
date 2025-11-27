@@ -63,14 +63,24 @@ const deleteUser = (req, res) => {
         }
 
         if (req.session.user && req.session.user.id === userId) {
-            req.flash('error', 'You cannot delete your own account.');
+            const selfRole = req.session.user.role || 'user';
+            if (selfRole === 'admin' || selfRole === 'superadmin') {
+                req.flash('error', 'Admins and superadmins cannot delete their own account.');
+            } else {
+                req.flash('error', 'You cannot delete your own account.');
+            }
             return res.redirect('/admin/users');
         }
 
-        if (target.role === 'admin') {
-            req.flash('error', 'You cannot delete other admin users.');
-            return res.redirect('/admin/users');
-        }
+    if (target.role === 'superadmin') {
+        req.flash('error', 'Superadmin accounts cannot be deleted.');
+        return res.redirect('/admin/users');
+    }
+
+    if (target.role === 'admin') {
+        req.flash('error', 'You cannot delete other admin users.');
+        return res.redirect('/admin/users');
+    }
 
         OrderModel.getOrdersByUser(userId, (orderErr, orders) => {
             if (orderErr) {
@@ -103,7 +113,7 @@ const deleteUser = (req, res) => {
 // Create user (admin only; can create admin accounts)
 const createUser = (req, res) => {
     const { username, email, password, address, contact, role } = req.body;
-    const allowedRoles = ['user', 'admin'];
+    const allowedRoles = ['user', 'admin', 'superadmin'];
 
     if (!username || !email || !password || !address || !contact) {
         req.flash('error', 'All fields are required.');
@@ -111,6 +121,11 @@ const createUser = (req, res) => {
     }
 
     const finalRole = allowedRoles.includes(role) ? role : 'user';
+
+    if (finalRole === 'superadmin' && (!req.session.user || req.session.user.role !== 'superadmin')) {
+        req.flash('error', 'Only a superadmin can create another superadmin.');
+        return res.redirect('/admin/users');
+    }
 
     UserModel.addUser(username, email, password, address, contact, finalRole, (err) => {
         if (err) {
@@ -204,14 +219,14 @@ const showOrderDetail = (req, res) => {
 const updateUser = (req, res) => {
     const userId = parseInt(req.params.id, 10);
     const { username, email, password, address, contact, role } = req.body;
-    const allowedRoles = ['user', 'admin'];
+    const allowedRoles = ['user', 'admin', 'superadmin'];
 
     if (!username || !email || !address || !contact) {
         req.flash('error', 'Username, email, contact, and address are required.');
         return res.redirect('/admin/users');
     }
 
-    const finalRole = allowedRoles.includes(role) ? role : 'user';
+    let finalRole = allowedRoles.includes(role) ? role : 'user';
 
     UserModel.getUserById(userId, (err, rows) => {
         if (err) return res.status(500).send('Error loading user');
@@ -220,6 +235,31 @@ const updateUser = (req, res) => {
         if (!existing) {
             req.flash('error', 'User not found.');
             return res.redirect('/admin/users');
+        }
+
+        const actor = req.session.user || {};
+
+        if (finalRole === 'superadmin' && actor.role !== 'superadmin') {
+            req.flash('error', 'Only a superadmin can assign the superadmin role.');
+            return res.redirect('/admin/users');
+        }
+
+        if (actor.role === 'admin' && existing.role !== 'user') {
+            req.flash('error', 'Admins can only modify users (not admins or superadmins).');
+            return res.redirect('/admin/users');
+        }
+
+        if (existing.role === 'superadmin') {
+            if (!req.session.user || req.session.user.role !== 'superadmin') {
+                req.flash('error', 'Only a superadmin can modify superadmin accounts.');
+                return res.redirect('/admin/users');
+            }
+            // Superadmin role is immutable, including when editing self
+            finalRole = 'superadmin';
+        }
+
+        if (req.session.user && req.session.user.id === userId && req.session.user.role === 'superadmin') {
+            finalRole = 'superadmin';
         }
 
         const newPassword = password && password.trim().length > 0 ? password : existing.password;

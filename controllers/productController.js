@@ -65,7 +65,7 @@ const showAllProducts = (req, res) => {
         }));
         const lowStockCount = productsWithStock.filter(p => p.isLowStock).length;
 
-        if (req.session && req.session.user && req.session.user.role === 'admin') {
+        if (req.session && req.session.user && (req.session.user.role === 'admin' || req.session.user.role === 'superadmin')) {
             return res.render('inventory', { 
                 products: productsWithStock, 
                 user: req.session.user,

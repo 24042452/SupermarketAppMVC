@@ -2,14 +2,24 @@ const db = require('../db');
 
 // Get all products
 const getAllProducts = (callback) => {
-    const sql = 'SELECT * FROM products';
-    db.query(sql, callback);
+    const sql = 'SELECT * FROM products WHERE COALESCE(is_deleted, 0) = 0';
+    db.query(sql, (err, rows) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            return db.query('SELECT * FROM products', callback);
+        }
+        callback(err, rows);
+    });
 };
 
 // Get one product by ID
 const getProductById = (id, callback) => {
-    const sql = 'SELECT * FROM products WHERE id = ?';
-    db.query(sql, [id], callback);
+    const sql = 'SELECT * FROM products WHERE id = ? AND COALESCE(is_deleted, 0) = 0';
+    db.query(sql, [id], (err, rows) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            return db.query('SELECT * FROM products WHERE id = ?', [id], callback);
+        }
+        callback(err, rows);
+    });
 };
 
 // Add new product (falls back if category column is missing)
@@ -38,8 +48,26 @@ const updateProduct = (id, name, quantity, price, image, category, callback) => 
 
 // Delete product
 const deleteProduct = (id, callback) => {
-    const sql = 'DELETE FROM products WHERE id = ?';
-    db.query(sql, [id], callback);
+    const softDeleteSql = 'UPDATE products SET is_deleted = 1 WHERE id = ?';
+    db.query(softDeleteSql, [id], (err) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            const alterSql = 'ALTER TABLE products ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0';
+            return db.query(alterSql, (alterErr) => {
+                if (alterErr && alterErr.code !== 'ER_DUP_FIELDNAME') {
+                    return callback(alterErr);
+                }
+                db.query(softDeleteSql, [id], (retryErr) => {
+                    if (retryErr && retryErr.code === 'ER_BAD_FIELD_ERROR') {
+                        // Fallback to hard delete if column still missing
+                        const hardDeleteSql = 'DELETE FROM products WHERE id = ?';
+                        return db.query(hardDeleteSql, [id], callback);
+                    }
+                    return callback(retryErr);
+                });
+            });
+        }
+        callback(err);
+    });
 };
 
 // Update only product quantity

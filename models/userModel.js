@@ -2,8 +2,15 @@ const db = require('../db');
 
 // Get all users
 const getAllUsers = (callback) => {
-    const sql = 'SELECT * FROM users';
-    db.query(sql, callback);
+    // Hide anonymized/deleted users from general listings and login checks
+    const sql = "SELECT * FROM users WHERE role <> 'deleted' OR role IS NULL";
+    db.query(sql, (err, rows) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            // Fallback if role column is missing or SQL mode rejects double quotes
+            return db.query('SELECT * FROM users', callback);
+        }
+        callback(err, rows);
+    });
 };
 
 // Get one user by ID
@@ -27,8 +34,10 @@ const updateUser = (userId, username, email, password, address, contact, role, c
 // Anonymize user but keep record and original details for order history
 const anonymizeUser = (userId, originalUser, callback) => {
     const safeUser = originalUser || {};
-    const username = safeUser.username ? `${safeUser.username} (deleted)` : `Deleted User #${userId}`;
-    const email = safeUser.email || `deleted_user_${userId}@example.com`;
+    // Generate unique placeholders so original email can be reused
+    const uniqueSuffix = `${userId}_${Date.now()}`;
+    const username = safeUser.username ? `${safeUser.username} (deleted)` : `Deleted User #${uniqueSuffix}`;
+    const email = `deleted+${uniqueSuffix}@example.com`;
     const address = safeUser.address || '';
     const contact = safeUser.contact || '';
     const sql = `

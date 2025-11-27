@@ -79,7 +79,11 @@
             <% if (users.length === 0) { %>
               <tr><td colspan="7" class="text-center text-muted py-3">No users found.</td></tr>
             <% } else { %>
-              <% users.forEach(u => { %>
+              <% users.forEach(u => { 
+                   const isSuperadmin = u.role === 'superadmin';
+                   const actorIsSuperadmin = user && user.role === 'superadmin';
+                   const editLocked = isSuperadmin && !actorIsSuperadmin;
+              %>
                 <tr class="<%= u.role === 'deleted' ? 'table-light' : '' %>">
                   <td><%= u.id %></td>
                   <td><%= u.username %></td>
@@ -98,10 +102,14 @@
                       <span class="text-muted small">User removed; orders retained.</span>
                     <% } else { %>
                       <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#edit-<%= u.id %>">Edit</button>
+                        <% if (editLocked) { %>
+                          <button class="btn btn-sm btn-dark" type="button" disabled title="Superadmin cannot be edited">Superadmin</button>
+                        <% } else { %>
+                          <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#edit-<%= u.id %>">Edit</button>
+                        <% } %>
                         <form action="/admin/users/<%= u.id %>/delete" method="POST" onsubmit="return confirm('Delete this user?');">
                           <button class="btn btn-sm btn-outline-danger"
-                            <% if ((user && user.id === u.id) || u.role === 'admin') { %>disabled title="Admins cannot delete other admins or themselves"<% } %>>
+                            <% if ((user && user.id === u.id) || u.role === 'admin' || isSuperadmin) { %>disabled title="Admins cannot delete other admins/superadmins or themselves"<% } %>>
                             Delete
                           </button>
                         </form>
@@ -109,7 +117,7 @@
                     <% } %>
                   </td>
                 </tr>
-                <% if (u.role !== 'deleted') { %>
+                <% if (u.role !== 'deleted' && !editLocked) { %>
                   <tr class="collapse bg-light" id="edit-<%= u.id %>">
                     <td colspan="7">
                       <form action="/admin/users/<%= u.id %>" method="POST" class="row g-2 align-items-end">
@@ -129,13 +137,21 @@
                           <label class="form-label mb-1 small text-muted">Address</label>
                           <input type="text" name="address" class="form-control form-control-sm" value="<%= u.address %>" required>
                         </div>
-                        <div class="col-md-3 col-lg-2">
-                          <label class="form-label mb-1 small text-muted">Role</label>
-                          <select name="role" class="form-select form-select-sm">
-                            <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>User</option>
-                            <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
-                          </select>
-                        </div>
+                        <% if (isSuperadmin) { %>
+                          <input type="hidden" name="role" value="superadmin">
+                          <div class="col-md-3 col-lg-2">
+                            <label class="form-label mb-1 small text-muted">Role</label>
+                            <input type="text" class="form-control form-control-sm" value="Superadmin" disabled>
+                          </div>
+                        <% } else { %>
+                          <div class="col-md-3 col-lg-2">
+                            <label class="form-label mb-1 small text-muted">Role</label>
+                            <select name="role" class="form-select form-select-sm">
+                              <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>User</option>
+                              <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                            </select>
+                          </div>
+                        <% } %>
                         <div class="col-md-3 col-lg-2">
                           <label class="form-label mb-1 small text-muted">Password (optional)</label>
                           <input type="password" name="password" class="form-control form-control-sm" placeholder="Leave blank to keep">

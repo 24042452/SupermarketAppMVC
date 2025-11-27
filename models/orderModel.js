@@ -27,7 +27,7 @@ const getOrderItems = (orderId, callback) => {
             p.productName,
             p.image
         FROM order_items oi
-        JOIN products p ON oi.product_id = p.id
+        LEFT JOIN products p ON oi.product_id = p.id
         WHERE oi.order_id = ?
     `;
     db.query(sql, [orderId], callback);
@@ -41,7 +41,7 @@ const getOrderDetails = (orderId, callback) => {
                p.productName, p.image
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
-        JOIN products p ON oi.product_id = p.id
+        LEFT JOIN products p ON oi.product_id = p.id
         WHERE o.id = ?
     `;
     db.query(sql, [orderId], callback);
@@ -51,7 +51,7 @@ const getOrderDetails = (orderId, callback) => {
 const getAllOrders = (callback) => {
     const sql = `SELECT o.*, u.username, u.email, u.address
                  FROM orders o
-                 JOIN users u ON o.user_id = u.id
+                 LEFT JOIN users u ON o.user_id = u.id
                  ORDER BY o.order_date DESC`;
     db.query(sql, callback);
 };

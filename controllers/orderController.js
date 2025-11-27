@@ -374,7 +374,7 @@ const showInvoice = (req, res) => {
 
     if (!user) return res.redirect('/login');
 
-    const fallback = user && user.role === 'admin' ? '/admin/orders' : '/orders';
+    const fallback = user && (user.role === 'admin' || user.role === 'superadmin') ? '/admin/orders' : '/orders';
 
     OrderModel.getOrderDetails(orderId, (err, rows) => {
         if (err) throw err;

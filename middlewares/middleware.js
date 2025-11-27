@@ -5,7 +5,8 @@ const checkAuthenticated = (req, res, next) => {
 };
 
 const checkAdmin = (req, res, next) => {
-    if (req.session && req.session.user && req.session.user.role === 'admin') return next();
+    const role = req.session && req.session.user && req.session.user.role;
+    if (role === 'admin' || role === 'superadmin') return next();
     res.redirect('/');
 };
 

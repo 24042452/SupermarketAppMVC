@@ -104,7 +104,7 @@ const loginUser = (req, res) => {
             if (cartErr) {
                 console.error('Error loading saved cart:', cartErr);
                 // Continue login even if cart retrieval fails
-                return user.role === 'admin' ? res.redirect('/admin') : res.redirect('/');
+                return (user.role === 'admin' || user.role === 'superadmin') ? res.redirect('/admin') : res.redirect('/');
             }
 
             const savedCart = (rows || []).map(row => ({
@@ -118,7 +118,7 @@ const loginUser = (req, res) => {
             const guestCart = req.session.cart || [];
             req.session.cart = mergeCarts(savedCart, guestCart);
 
-            if (user.role === 'admin') {
+            if (user.role === 'admin' || user.role === 'superadmin') {
                 res.redirect('/admin');
             } else {
                 res.redirect('/');
