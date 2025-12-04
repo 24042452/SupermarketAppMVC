@@ -160,6 +160,7 @@
             <form action="/product/<%= product.id %>/review" method="POST" class="row g-2">
               <div class="col-md-4">
                 <label class="form-label d-block">Rating</label>
+                <div id="reviewRatingError" class="text-danger small mb-1" style="display:none;">Please select a star rating.</div>
                 <div class="d-flex gap-1 align-items-center star-input-group">
                   <% for (let r = 1; r <= 5; r++) { %>
                     <label class="star-input" data-value="<%= r %>">
@@ -201,12 +202,15 @@
       if (!group) return;
       const labels = Array.from(group.querySelectorAll('.star-input'));
       const inputs = Array.from(group.querySelectorAll('input[type="radio"]'));
+      const ratingError = document.getElementById('reviewRatingError');
+      const reviewForm = document.querySelector('form[action^="/product/"][action$="/review"]');
 
       const setActive = (value) => {
         labels.forEach(label => {
           const val = Number(label.dataset.value || 0);
           label.classList.toggle('active', val <= value);
         });
+        if (ratingError) ratingError.style.display = 'none';
       };
 
       inputs.forEach(input => {
@@ -222,6 +226,16 @@
 
       const prechecked = group.querySelector('input[type="radio"]:checked');
       setActive(prechecked ? Number(prechecked.value) : 0);
+
+      if (reviewForm) {
+        reviewForm.addEventListener('submit', (e) => {
+          const checked = group.querySelector('input[type="radio"]:checked');
+          if (!checked) {
+            e.preventDefault();
+            if (ratingError) ratingError.style.display = 'block';
+          }
+        });
+      }
     })();
   </script>
 

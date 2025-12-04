@@ -3,6 +3,23 @@ const ReviewModel = require('../models/reviewModel');
 
 const LOW_STOCK_THRESHOLD = 10;
 const CATEGORY_OPTIONS = ['fruits', 'vegetable', 'baked', 'beverage'];
+const BANNED_REVIEW_WORDS = ['spam', 'scam', 'fake', 'idiot', 'stupid', 'damn', 'shit', 'fuck', 'bitch', 'bastard'];
+
+const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const bannedWordRegex = new RegExp(`\\b(${BANNED_REVIEW_WORDS.map(escapeRegExp).join('|')})\\b`, 'i');
+
+// Lightweight guard against profanity and obvious spam in reviews
+const isSpamOrVulgar = (text) => {
+    const value = (text || '').toLowerCase();
+    if (!value) return false;
+
+    if (value.includes('http://') || value.includes('https://') || value.includes('www.')) return true;
+    if (bannedWordRegex.test(value)) return true;
+
+    const tokens = value.split(/\W+/).filter(Boolean);
+    const uniqueTokens = new Set(tokens);
+    return tokens.length >= 10 && uniqueTokens.size <= 3;
+};
 
 const normalizeCategory = (raw) => {
     const val = (raw || '').toString().toLowerCase().trim();
@@ -236,6 +253,11 @@ const addReview = (req, res) => {
 
     if (!rating || rating < 1 || rating > 5) {
         req.flash('error', 'Please provide a rating between 1 and 5.');
+        return res.redirect(`/product/${productId}`);
+    }
+
+    if (isSpamOrVulgar(comment)) {
+        req.flash('error', 'Review rejected: please avoid spam or inappropriate language.');
         return res.redirect(`/product/${productId}`);
     }
 
