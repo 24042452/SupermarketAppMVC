@@ -157,14 +157,14 @@
         <div class="mt-4">
           <h5 class="fw-bold">Leave a Review</h5>
           <% if (user) { %>
-            <form action="/product/<%= product.id %>/review" method="POST" class="row g-2">
+            <form action="/product/<%= product.id %>/review" method="POST" class="row g-2" novalidate>
               <div class="col-md-4">
                 <label class="form-label d-block">Rating</label>
                 <div id="reviewRatingError" class="text-danger small mb-1" style="display:none;">Please select a star rating.</div>
                 <div class="d-flex gap-1 align-items-center star-input-group">
                   <% for (let r = 1; r <= 5; r++) { %>
                     <label class="star-input" data-value="<%= r %>">
-                      <input type="radio" name="rating" value="<%= r %>" required>
+                      <input type="radio" name="rating" value="<%= r %>">
                       <span>&#9733;</span>
                     </label>
                   <% } %>
