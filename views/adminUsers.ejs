@@ -81,8 +81,17 @@
             <% } else { %>
               <% users.forEach(u => { 
                    const isSuperadmin = u.role === 'superadmin';
-                   const actorIsSuperadmin = user && user.role === 'superadmin';
+                   const actorRole = (user && user.role) || 'user';
+                   const actorIsSuperadmin = actorRole === 'superadmin';
+                   const actorIsAdmin = actorRole === 'admin';
                    const editLocked = isSuperadmin && !actorIsSuperadmin;
+
+                   const cannotDelete = (() => {
+                     if (!user) return true;
+                     if (actorIsSuperadmin) return (user.id === u.id) || isSuperadmin;
+                     if (actorIsAdmin) return (user.id === u.id) || u.role !== 'user';
+                     return true;
+                   })();
               %>
                 <tr class="<%= u.role === 'deleted' ? 'table-light' : '' %>">
                   <td><%= u.id %></td>
@@ -107,12 +116,11 @@
                         <% } else { %>
                           <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#edit-<%= u.id %>">Edit</button>
                         <% } %>
-                        <form action="/admin/users/<%= u.id %>/delete" method="POST" onsubmit="return confirm('Delete this user?');">
-                          <button class="btn btn-sm btn-outline-danger"
-                            <% if ((user && user.id === u.id) || u.role === 'admin' || isSuperadmin) { %>disabled title="Admins cannot delete other admins/superadmins or themselves"<% } %>>
-                            Delete
-                          </button>
-                        </form>
+                        <% if (!cannotDelete) { %>
+                          <form action="/admin/users/<%= u.id %>/delete" method="POST" onsubmit="return confirm('Delete this user?');">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                          </form>
+                        <% } %>
                       </div>
                     <% } %>
                   </td>
@@ -143,13 +151,19 @@
                             <label class="form-label mb-1 small text-muted">Role</label>
                             <input type="text" class="form-control form-control-sm" value="Superadmin" disabled>
                           </div>
-                        <% } else { %>
+                        <% } else if (actorIsSuperadmin) { %>
                           <div class="col-md-3 col-lg-2">
                             <label class="form-label mb-1 small text-muted">Role</label>
                             <select name="role" class="form-select form-select-sm">
                               <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>User</option>
                               <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
                             </select>
+                          </div>
+                        <% } else { %>
+                          <div class="col-md-3 col-lg-2">
+                            <label class="form-label mb-1 small text-muted">Role</label>
+                            <input type="text" class="form-control form-control-sm" value="<%= u.role %>" disabled>
+                            <input type="hidden" name="role" value="<%= u.role %>">
                           </div>
                         <% } %>
                         <div class="col-md-3 col-lg-2">

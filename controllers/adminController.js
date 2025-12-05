@@ -72,15 +72,19 @@ const deleteUser = (req, res) => {
             return res.redirect('/admin/users');
         }
 
-    if (target.role === 'superadmin') {
-        req.flash('error', 'Superadmin accounts cannot be deleted.');
-        return res.redirect('/admin/users');
-    }
+        const actorRole = (req.session.user && req.session.user.role) || 'user';
+        const actorIsSuperadmin = actorRole === 'superadmin';
+        const actorIsAdmin = actorRole === 'admin';
 
-    if (target.role === 'admin') {
-        req.flash('error', 'You cannot delete other admin users.');
-        return res.redirect('/admin/users');
-    }
+        if (target.role === 'superadmin') {
+            req.flash('error', 'Superadmin accounts cannot be deleted.');
+            return res.redirect('/admin/users');
+        }
+
+        if (!actorIsSuperadmin && !(actorIsAdmin && target.role === 'user')) {
+            req.flash('error', 'You do not have permission to delete this user.');
+            return res.redirect('/admin/users');
+        }
 
         OrderModel.getOrdersByUser(userId, (orderErr, orders) => {
             if (orderErr) {
@@ -226,6 +230,7 @@ const updateUser = (req, res) => {
         return res.redirect('/admin/users');
     }
 
+    const actor = req.session.user || {};
     let finalRole = allowedRoles.includes(role) ? role : 'user';
 
     UserModel.getUserById(userId, (err, rows) => {
@@ -237,8 +242,6 @@ const updateUser = (req, res) => {
             return res.redirect('/admin/users');
         }
 
-        const actor = req.session.user || {};
-
         if (finalRole === 'superadmin' && actor.role !== 'superadmin') {
             req.flash('error', 'Only a superadmin can assign the superadmin role.');
             return res.redirect('/admin/users');
@@ -247,6 +250,11 @@ const updateUser = (req, res) => {
         if (actor.role === 'admin' && existing.role !== 'user') {
             req.flash('error', 'Admins can only modify users (not admins or superadmins).');
             return res.redirect('/admin/users');
+        }
+
+        // Admins cannot change roles; keep the existing role.
+        if (actor.role === 'admin') {
+            finalRole = existing.role;
         }
 
         if (existing.role === 'superadmin') {
