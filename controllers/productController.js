@@ -2,7 +2,7 @@ const ProductModel = require('../models/productModel');
 const ReviewModel = require('../models/reviewModel');
 
 const LOW_STOCK_THRESHOLD = 10;
-const CATEGORY_OPTIONS = ['fruits', 'vegetable', 'baked', 'beverage'];
+const CATEGORY_OPTIONS = ['fruits', 'vegetable', 'baked', 'beverage', 'raw'];
 const BANNED_REVIEW_WORDS = ['spam', 'scam', 'fake', 'idiot', 'stupid', 'damn', 'shit', 'fuck', 'bitch', 'bastard'];
 
 const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -36,6 +36,7 @@ const getCategory = (product) => {
     if (name.match(/tomato|broccoli/)) return 'vegetable';
     if (name.includes('bread')) return 'baked';
     if (name.includes('milk')) return 'beverage';
+    if (name.match(/chicken|beef|pork|fish|salmon|steak|meat/)) return 'raw';
     return '';
 };
 

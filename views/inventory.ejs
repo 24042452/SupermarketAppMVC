@@ -86,6 +86,7 @@
             <option value="vegetable" <%= category === 'vegetable' ? 'selected' : '' %>>Vegetable</option>
             <option value="baked" <%= category === 'baked' ? 'selected' : '' %>>Baked</option>
             <option value="beverage" <%= category === 'beverage' ? 'selected' : '' %>>Beverage</option>
+            <option value="raw" <%= category === 'raw' ? 'selected' : '' %>>Raw Food</option>
           </select>
         </div>
         <div class="col-md-3">
@@ -126,6 +127,7 @@
              if (name.match(/tomato|broccoli/)) return 'vegetable';
              if (name.includes('bread')) return 'baked';
              if (name.includes('milk')) return 'beverage';
+             if (name.match(/chicken|beef|pork|fish|salmon|steak|meat/)) return 'raw';
              return 'n/a';
            };
         %>
