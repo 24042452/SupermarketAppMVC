@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config();
 const multer = require('multer');
 const session = require('express-session');
 const flash = require('connect-flash');
@@ -16,6 +17,7 @@ const ProductController = require('./controllers/productController');
 const UserController = require('./controllers/userController');
 const orderController = require('./controllers/orderController');
 const AdminController = require('./controllers/adminController');
+const NetsController = require('./services/nets');
 
 // Middleware
 const { checkAuthenticated, checkAdmin } = require('./middlewares/middleware');
@@ -26,6 +28,7 @@ app.set('view engine', 'ejs');
 // Static files & form parsing
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 // Session & flash
 app.use(session({
@@ -116,6 +119,23 @@ app.post('/cart/clear', orderController.clearCart);
 // ===========================
 app.get('/checkout', orderController.showCheckout); // Display checkout page
 app.post('/checkout', orderController.processCheckout); // Process checkout POST
+app.post('/paypal/create-order', orderController.createPaypalOrder);
+app.post('/paypal/capture-order', orderController.capturePaypalOrder);
+app.post('/nets-qr/request', NetsController.generateQrCode);
+app.post('/nets-qr/request-json', NetsController.generateQrCodeJson);
+app.post('/nets-qr/confirm', orderController.confirmNetsPayment);
+app.get('/nets-qr/pay', orderController.showNetsQrPay);
+app.get('/nets-qr/fail', (req, res) => {
+    res.render('netsQrFail', {
+        title: 'Error',
+        responseCode: 'N.A.',
+        instructions: '',
+        errorMsg: 'Transaction failed. Please try again.'
+    });
+});
+app.post('/stripe/create-session', orderController.createStripeCheckoutSession);
+app.get('/stripe/success', orderController.handleStripeSuccess);
+app.get('/stripe/cancel', orderController.handleStripeCancel);
 
 // ===========================
 //       ORDER HISTORY

@@ -201,7 +201,7 @@
 
             <div>
               <span>Total:</span><br>
-              <small>$<%= Number(order.total || 0).toFixed(2) %></small>
+              <small>$<%= Number(order.grandTotal || order.total || 0).toFixed(2) %></small>
             </div>
 
             <div>
@@ -234,10 +234,8 @@
           </p>
 
           <!-- Products -->
-          <% let grandTotal = 0; %>
           <% order.items.forEach(item => { 
                const lineTotal = Number(item.quantity) * Number(item.price || item.price_each || 0);
-               grandTotal += lineTotal;
           %>
             <div class="product-item">
               <img src="/images/<%= item.image %>" alt="<%= item.productName %>">
@@ -247,7 +245,7 @@
               </div>
             </div>
           <% }) %>
-          <div class="order-total">Grand Total: $<%= grandTotal.toFixed(2) %></div>
+          <div class="order-total">Grand Total: $<%= Number(order.grandTotal || order.total || 0).toFixed(2) %></div>
 
           <!-- Footer Buttons -->
           <div class="order-footer">

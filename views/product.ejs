@@ -1,6 +1,4 @@
-<!-- product.ejs -->
-
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,18 +9,198 @@
   <title>Supermarket App</title>
   <style>
     body {
-      background: radial-gradient(circle at 10% 20%, #e8f0ff 0, #f7f9fc 28%, #eef2f6 60%);
+      background: #faf7f2;
       font-family: 'Segoe UI', sans-serif;
-      color: #0f172a;
+      color: #111827;
     }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #6b7280;
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .back-link:hover {
+      color: #111827;
+    }
+
     .product-card {
-      max-width: 720px;
-      margin: 40px auto;
+      background: #fff;
+      border-radius: 18px;
       padding: 24px;
-      border-radius: 16px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-      background: linear-gradient(135deg, #ffffff 0%, #f9fbff 80%);
+      border: 1px solid #ececec;
+      box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+    }
+
+    .product-shell {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .product-media {
+      border-radius: 20px;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid #ececec;
+    }
+
+    .product-image {
+      width: 100%;
+      height: 100%;
+      max-height: 420px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .category-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      color: #374151;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+
+    .product-name {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .product-desc {
+      color: #6b7280;
+      margin-bottom: 18px;
+    }
+
+    .product-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .product-unit {
+      margin-bottom: 14px;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .product-price {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .qty-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #f3f4f6;
+      border-radius: 999px;
+      padding: 6px 12px;
+      margin-bottom: 16px;
+    }
+
+    .qty-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: #f0ece6;
+      color: #111827;
+      font-weight: 700;
+    }
+
+    .qty-input {
+      width: 40px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .add-btn {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: #22c55e;
+      color: #fff;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .add-btn:hover {
+      background: #16a34a;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 18px rgba(34, 197, 94, 0.25);
+    }
+
+    .add-btn:disabled {
+      background: #cbd5e1;
+      color: #fff;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .stock-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      font-weight: 600;
+      color: #16a34a;
+    }
+
+    .stock-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #16a34a;
+    }
+
+    .stock-pill.low {
+      color: #d97706;
+    }
+
+    .stock-pill.low .stock-dot {
+      background: #d97706;
+    }
+
+    .stock-pill.out {
+      color: #dc2626;
+    }
+
+    .stock-pill.out .stock-dot {
+      background: #dc2626;
+    }
+
+    @media (max-width: 992px) {
+      .product-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .product-image {
+        max-height: 360px;
+      }
     }
 
     .star-input input { display: none; }
@@ -39,14 +217,160 @@
     .star-input span:hover {
       color: #ffb703;
     }
-    .product-image {
-      width: 240px;
-      height: 240px;
-      object-fit: contain;
-      background: #f8fbff;
-      border: 1px solid #e2e8f0;
+
+    .reviews-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #ececec;
+    }
+
+    .reviews-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .reviews-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+
+    .rating-summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .rating-score {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .rating-count {
+      color: #6b7280;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .rating-stars {
+      color: #f59e0b;
+      font-size: 1.2rem;
+    }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .review-card {
+      background: #fff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 20px rgba(17, 24, 39, 0.05);
+    }
+
+    .review-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .review-user {
+      font-weight: 700;
+    }
+
+    .review-meta {
+      color: #6b7280;
+      font-size: 0.85rem;
+    }
+
+    .review-text {
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .review-reply {
+      background: #f9fafb;
+      border: 1px solid #eef2f7;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    .review-form-card {
+      background: #fff;
+      border: 1px dashed #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 18px;
+    }
+
+    .related-section {
+      margin-top: 32px;
+    }
+
+    .related-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .related-card {
+      background: #fff;
+      border: 1px solid #ececec;
       border-radius: 14px;
-      padding: 12px;
+      overflow: hidden;
+      text-decoration: none;
+      color: #111827;
+      box-shadow: 0 8px 18px rgba(17, 24, 39, 0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .related-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 22px rgba(17, 24, 39, 0.1);
+      color: #111827;
+    }
+
+    .related-image {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      background: #fff;
+    }
+
+    .related-body {
+      padding: 12px 14px 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .related-name {
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+
+    .related-price {
+      font-weight: 700;
+      color: #111827;
     }
   </style>
 </head>
@@ -57,105 +381,138 @@
   <% const formatDate = (dt) => { try { return new Date(dt).toLocaleDateString('en-GB'); } catch(e) { return dt; } }; %>
   <% const outOfStock = product && product.quantity <= 0; %>
   <% const lowStock = product && !outOfStock && product.quantity < 10; %>
+  <% const categoryLabel = (product && product.category) ? product.category : ''; %>
 
   <div class="container py-4">
+    <a href="/" class="back-link">&larr; Back to products</a>
+
     <div class="product-card">
-      <h2 class="section-title text-center mb-2">Product Details</h2>
       <% if (messages && messages.length) { %>
-        <div class="alert alert-danger text-center"><%= messages.join('<br>') %></div>
+        <div class="alert alert-danger"><%= messages.join('<br>') %></div>
       <% } %>
       <% if (success && success.length) { %>
-        <div class="alert alert-success text-center"><%= success.join('<br>') %></div>
+        <div class="alert alert-success"><%= success.join('<br>') %></div>
       <% } %>
 
       <% if (product) { %>
-        <div class="row g-4 align-items-center">
-          <div class="col-md-5 text-center">
-            <div class="position-relative">
-              <img src="/images/<%= product.image %>" alt="<%= product.productName %>" class="product-image">
-              <span class="badge bg-primary position-absolute top-0 start-0 m-2 fw-semibold">S$<%= Number(product.price).toFixed(2) %></span>
-            </div>
+        <div class="product-shell">
+          <div class="product-media">
+            <img src="/images/<%= product.image %>" alt="<%= product.productName %>" class="product-image">
           </div>
-          <div class="col-md-7">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <h4 class="fw-bold mb-2"><%= product.productName %></h4>
-                <div class="d-flex align-items-center gap-2">
-                  <p class="text-muted mb-2">Stock: <strong><%= product.quantity %></strong></p>
-                  <% if (lowStock) { %>
-                    <span class="badge bg-warning text-dark">Low stock</span>
-                  <% } %>
-                  <% if (outOfStock) { %>
-                    <span class="badge bg-danger">Out of stock</span>
-                  <% } %>
+          <div class="product-info">
+            <% if (categoryLabel) { %>
+              <div class="category-pill"><%= categoryLabel %></div>
+            <% } %>
+            <div class="product-name"><%= product.productName %></div>
+            <div class="product-desc">Fresh, organic groceries picked at peak ripeness. Perfect for snacking or cooking.</div>
+
+            <div class="product-label">Unit</div>
+            <div class="product-unit">Per item</div>
+
+            <div class="product-price">$<%= Number(product.price).toFixed(2) %></div>
+
+            <% if (!isAdmin) { %>
+              <form action="/add-to-cart/<%= product.id %>" method="POST" class="add-cart-form" data-price="<%= Number(product.price).toFixed(2) %>">
+                <div class="product-label">Quantity</div>
+                <div class="qty-control">
+                  <button type="button" class="qty-btn" data-change="-1" <%= outOfStock ? 'disabled' : '' %>>-</button>
+                  <input type="number" name="quantity" class="qty-input" min="1" step="1" value="1" readonly>
+                  <button type="button" class="qty-btn" data-change="1" <%= outOfStock ? 'disabled' : '' %>>+</button>
                 </div>
-              </div>
-              <% if (averageRating) { %>
-                <div class="text-end">
-                  <div class="text-warning fs-5">
-                    <% for (let s = 1; s <= 5; s++) { %>
-                      <%- s <= Math.round(averageRating) ? '&#9733;' : '&#9734;' %>
-                    <% } %>
-                  </div>
-                  <small class="text-muted">Avg <%= averageRating %>/5</small>
-                </div>
-              <% } %>
-            </div>
-            <p class="mt-3">Discover premium quality groceries tailored for your daily needs.</p>
-            <div class="d-flex gap-2 mt-3">
-              <% if (!isAdmin) { %>
-                <form action="/add-to-cart/<%= product.id %>" method="POST" class="d-flex gap-2">
-                  <input type="hidden" name="quantity" value="1">
-                  <button class="btn btn-primary px-3" <%= outOfStock ? 'disabled' : '' %>>Add to Cart</button>
-                </form>
+                <button class="add-btn" type="submit" <%= outOfStock ? 'disabled' : '' %>>
+                  <span>Add to Cart - $<span class="add-total"><%= Number(product.price).toFixed(2) %></span></span>
+                </button>
+              </form>
+            <% } %>
+
+            <div class="stock-pill <%= outOfStock ? 'out' : (lowStock ? 'low' : '') %>">
+              <span class="stock-dot"></span>
+              <% if (outOfStock) { %>
+                Out of stock
+              <% } else if (lowStock) { %>
+                Low stock - <%= product.quantity %> available
+              <% } else { %>
+                In stock - <%= product.quantity %> available
               <% } %>
             </div>
           </div>
         </div>
 
-        <div class="mt-4">
-          <h5 class="fw-bold">Customer Reviews</h5>
+        <% if (relatedProducts && relatedProducts.length) { %>
+          <div class="related-section">
+            <div class="related-title">More from <%= relatedCategoryLabel %></div>
+            <div class="related-grid">
+              <% relatedProducts.forEach(item => { %>
+                <a class="related-card" href="/product/<%= item.id %>">
+                  <img src="/images/<%= item.image %>" alt="<%= item.productName %>" class="related-image">
+                  <div class="related-body">
+                    <div class="related-name"><%= item.productName %></div>
+                    <div class="related-price">$<%= Number(item.price).toFixed(2) %></div>
+                  </div>
+                </a>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <div class="reviews-section">
+          <div class="reviews-header">
+            <div class="reviews-title">Customer Reviews</div>
+            <div class="rating-summary">
+              <% if (averageRating) { %>
+                <div class="rating-score"><%= averageRating %></div>
+                <div class="rating-stars">
+                  <% for (let s = 1; s <= 5; s++) { %>
+                    <%- s <= Math.round(averageRating) ? '&#9733;' : '&#9734;' %>
+                  <% } %>
+                </div>
+              <% } else { %>
+                <div class="rating-score">No ratings yet</div>
+              <% } %>
+              <div class="rating-count"><%= reviews ? reviews.length : 0 %> reviews</div>
+            </div>
+          </div>
+
           <% if (!reviews || reviews.length === 0) { %>
             <p class="text-muted">No reviews yet.</p>
           <% } else { %>
-            <% reviews.forEach(review => { %>
-              <div class="border rounded p-3 mb-2 bg-white">
-                <div class="d-flex justify-content-between align-items-center">
-                  <strong><%= review.username %></strong>
-                  <span class="text-warning">
-                    <% for (let star = 1; star <= 5; star++) { %>
-                      <%- star <= review.rating ? '&#9733;' : '&#9734;' %>
-                    <% } %>
-                  </span>
+            <div class="reviews-grid">
+              <% reviews.forEach(review => { %>
+                <div class="review-card">
+                  <div class="review-head">
+                    <div class="review-user"><%= review.username %></div>
+                    <div class="rating-stars">
+                      <% for (let star = 1; star <= 5; star++) { %>
+                        <%- star <= review.rating ? '&#9733;' : '&#9734;' %>
+                      <% } %>
+                    </div>
+                  </div>
+                  <div class="review-text"><%= review.comment || 'No comment provided.' %></div>
+                  <div class="review-meta"><%= review.created_at ? formatDate(review.created_at) : '' %></div>
+                  <% if (review.reply) { %>
+                    <div class="review-reply mt-2"><strong>Admin reply:</strong> <%= review.reply %></div>
+                  <% } %>
+
+                  <% if (user && user.role === 'admin') { %>
+                    <div class="d-flex gap-2 mt-3">
+                      <form action="/reviews/<%= review.id %>/delete" method="POST" onsubmit="return confirm('Delete this review?');">
+                        <input type="hidden" name="productId" value="<%= product.id %>">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                      </form>
+                      <form action="/reviews/<%= review.id %>/reply" method="POST" class="d-flex gap-2 flex-grow-1">
+                        <input type="hidden" name="productId" value="<%= product.id %>">
+                        <input type="text" name="reply" class="form-control form-control-sm" placeholder="Reply..." value="<%= review.reply || '' %>">
+                        <button class="btn btn-sm btn-outline-primary">Save Reply</button>
+                      </form>
+                    </div>
+                  <% } %>
                 </div>
-                <p class="mb-1"><%= review.comment || 'No comment provided.' %></p>
-                <small class="text-muted"><%= review.created_at ? formatDate(review.created_at) : '' %></small>
-                <% if (review.reply) { %>
-                  <div class="mt-2 p-2 bg-light border rounded">
-                    <strong>Admin reply:</strong> <%= review.reply %>
-                  </div>
-                <% } %>
-
-                <% if (user && user.role === 'admin') { %>
-                  <div class="d-flex gap-2 mt-2">
-                    <form action="/reviews/<%= review.id %>/delete" method="POST" onsubmit="return confirm('Delete this review?');">
-                      <input type="hidden" name="productId" value="<%= product.id %>">
-                      <button class="btn btn-sm btn-outline-danger">Delete</button>
-                    </form>
-                    <form action="/reviews/<%= review.id %>/reply" method="POST" class="d-flex gap-2 flex-grow-1">
-                      <input type="hidden" name="productId" value="<%= product.id %>">
-                      <input type="text" name="reply" class="form-control form-control-sm" placeholder="Reply..." value="<%= review.reply || '' %>">
-                      <button class="btn btn-sm btn-outline-primary">Save Reply</button>
-                    </form>
-                  </div>
-                <% } %>
-              </div>
-            <% }) %>
+              <% }) %>
+            </div>
           <% } %>
-        </div>
 
-        <div class="mt-4">
-          <h5 class="fw-bold">Leave a Review</h5>
+          <div class="review-form-card">
+            <h5 class="fw-bold mb-2">Leave a Review</h5>
           <% if (user) { %>
             <form action="/product/<%= product.id %>/review" method="POST" class="row g-2" novalidate>
               <div class="col-md-4">
@@ -181,21 +538,15 @@
           <% } else { %>
             <p class="text-muted">Please <a href="/login">login</a> to leave a review.</p>
           <% } %>
+          </div>
         </div>
+
       <% } else { %>
         <p>No product found.</p>
       <% } %>
-
-      <div class="d-flex gap-2 mt-4">
-        <% if (isAdmin) { %>
-          <a href="/inventory" class="btn btn-outline-primary">Back to Inventory</a>
-        <% } else { %>
-          <a href="/" class="btn btn-outline-primary">Back to Shop</a>
-        <% } %>
-      </div>
     </div>
   </div>
-  
+
   <script>
     (function() {
       const group = document.querySelector('.star-input-group');
@@ -237,11 +588,30 @@
         });
       }
     })();
-  </script>
 
+    document.querySelectorAll('.add-cart-form').forEach((form) => {
+      const price = Number(form.dataset.price || 0);
+      const qtyInput = form.querySelector('.qty-input');
+      const totalEl = form.querySelector('.add-total');
+      const buttons = form.querySelectorAll('.qty-btn');
+
+      const updateTotal = () => {
+        const qty = Number(qtyInput.value) || 1;
+        totalEl.textContent = (price * qty).toFixed(2);
+      };
+
+      buttons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const delta = Number(btn.dataset.change || 0);
+          const current = Number(qtyInput.value) || 1;
+          const next = Math.max(1, current + delta);
+          qtyInput.value = next;
+          updateTotal();
+        });
+      });
+
+      updateTotal();
+    });
+  </script>
 </body>
 </html>
-
-
-
-

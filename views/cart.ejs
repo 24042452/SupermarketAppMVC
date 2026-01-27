@@ -9,7 +9,7 @@
 
   <style>
     body {
-      background: radial-gradient(circle at 10% 20%, #e8f0ff 0, #f7f9fc 28%, #eef2f6 60%);
+      background: #faf7f2;
       font-family: 'Segoe UI', sans-serif;
       color: #0f172a;
     }
@@ -17,57 +17,75 @@
     .section-title {
       font-size: 2.1rem;
       font-weight: 800;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
       letter-spacing: -0.02em;
-      color: #0b1c40;
+      color: #1f2937;
     }
 
     .cart-item {
-      background: linear-gradient(135deg, #ffffff 0%, #f9fbff 80%);
-      border-radius: 14px;
-      padding: 18px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px 20px;
       margin-bottom: 18px;
-      display: flex;
+      display: grid;
+      grid-template-columns: 110px minmax(140px, 1fr) 170px 120px 44px;
       align-items: center;
-      gap: 20px;
-      transition: 0.2s ease;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-    }
-
-    .cart-item:hover {
-      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
-      transform: translateY(-2px);
+      gap: 16px;
+      border: 1px solid #ececec;
+      box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
     }
 
     .cart-item img {
-      width: 120px;
-      height: 120px;
-      object-fit: contain;
-      background: #f8fbff;
-      border-radius: 12px;
-      padding: 10px;
-      border: 1px solid #e2e8f0;
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      background: #f3f4f6;
+      border-radius: 14px;
+      border: 1px solid #eee;
     }
 
     .product-title {
       font-size: 1.15rem;
       font-weight: 700;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       color: #0f172a;
     }
 
+    .product-meta {
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
     .price {
-      font-size: 1rem;
-      color: #0f3d8a;
+      font-size: 1.1rem;
+      color: #111827;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .qty-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qty-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: none;
+      background: #f3f4f6;
+      color: #111827;
       font-weight: 700;
     }
 
-    .subtotal {
-      font-size: 1rem;
+    .qty-input {
+      width: 40px;
+      text-align: center;
+      border: none;
+      background: transparent;
       font-weight: 700;
-      margin-top: 5px;
-      color: #0b1c40;
+      color: #111827;
     }
 
     .btn-action {
@@ -77,21 +95,118 @@
     }
 
     .summary-box {
-      background: linear-gradient(135deg, #ffffff 0%, #f9fbff 80%);
-      padding: 22px;
+      background: #fff;
+      padding: 24px;
       border-radius: 16px;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+      border: 1px solid #ececec;
     }
 
     .summary-box h5 {
       font-size: 1.3rem;
       font-weight: 800;
-      color: #0b1c40;
+      color: #111827;
     }
 
     .summary-box p { font-size: 1rem; }
-    .summary-box strong { font-size: 1.15rem; }
+    .summary-box strong { font-size: 1.2rem; }
+
+    .summary-note {
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    .remove-btn {
+      border: none;
+      background: transparent;
+      color: #ef4444;
+      padding: 6px;
+      border-radius: 10px;
+    }
+
+    .remove-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .action-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 992px) {
+      .cart-item {
+        grid-template-columns: 90px 1fr;
+        grid-template-areas:
+          "img info"
+          "img qty"
+          "img price"
+          "img remove";
+      }
+
+      .cart-img { grid-area: img; }
+      .cart-info { grid-area: info; }
+      .cart-qty { grid-area: qty; }
+      .cart-price { grid-area: price; text-align: left; }
+      .cart-remove { grid-area: remove; }
+    }
+
+    .empty-cart {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 20px;
+      min-height: 65vh;
+      color: #111827;
+    }
+
+    .empty-icon {
+      width: 72px;
+      height: 72px;
+      margin-bottom: 18px;
+      color: #6b7280;
+    }
+
+    .empty-cart h3 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .empty-cart p {
+      color: #6b7280;
+      margin-bottom: 22px;
+    }
+
+    .empty-cta {
+      background: #22c55e;
+      color: #fff;
+      border: none;
+      padding: 12px 26px;
+      border-radius: 999px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      box-shadow: 0 10px 18px rgba(34, 197, 94, 0.25);
+    }
+
+    .empty-cta:hover {
+      color: #fff;
+      background: #16a34a;
+      transform: translateY(-1px);
+      box-shadow: 0 14px 24px rgba(34, 197, 94, 0.35);
+    }
   </style>
 </head>
 
@@ -100,7 +215,6 @@
 
   <div class="container my-5">
 
-    <h2 class="section-title">Your Shopping Cart</h2>
     <% if (messages && messages.length) { %>
       <div class="alert alert-danger"><%= messages.join('<br>') %></div>
     <% } %>
@@ -110,14 +224,19 @@
 
     <% if (cart.length === 0) { %>
 
-      <p class="text-center text-muted">Your cart is empty.</p>
-      <div class="text-center mt-3">
-        <a href="/" class="btn btn-primary px-4 py-2">Continue Shopping</a>
+      <div class="empty-cart">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 7h12l-1.2 12.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 7z"></path>
+          <path d="M9 9V7a3 3 0 0 1 6 0v2"></path>
+        </svg>
+        <h3>Your cart is empty</h3>
+        <p>Add some delicious items to get started!</p>
+        <a href="/" class="empty-cta">Start Shopping</a>
       </div>
 
     <% } else { %>
 
-      <div class="row">
+      <div class="row g-4">
 
         <!-- CART ITEMS -->
         <div class="col-lg-8">
@@ -128,40 +247,43 @@
 
             <div class="cart-item">
 
-              <img src="/images/<%= item.image %>" alt="<%= item.productName %>">
+              <img class="cart-img" src="/images/<%= item.image %>" alt="<%= item.productName %>">
 
-              <div class="flex-grow-1">
+              <div class="cart-info">
+                <div class="product-title"><%= item.productName %></div>
+                <div class="product-meta">per item</div>
+              </div>
 
-                <p class="product-title"><%= item.productName %></p>
+              <div class="cart-qty">
+                <form action="/cart/update/<%= item.id || item.productId %>" method="POST" class="qty-controls">
+                  <button type="button" class="qty-btn btn-qty-change" data-change="-1" aria-label="Decrease quantity">-</button>
+                  <input
+                    type="number"
+                    name="quantity"
+                    min="1"
+                    step="1"
+                    inputmode="numeric"
+                    class="qty-input"
+                    value="<%= item.quantity %>"
+                    readonly>
+                  <button type="button" class="qty-btn btn-qty-change" data-change="1" aria-label="Increase quantity">+</button>
+                </form>
+              </div>
 
-                <p class="price">$<%= Number(item.price).toFixed(2) %></p>
+              <div class="price cart-price">$<%= (Number(item.price) * item.quantity).toFixed(2) %></div>
 
-                <p class="mb-1">Qty: <strong><%= item.quantity %></strong></p>
-
-                <p class="subtotal">
-                  Subtotal: $<%= (Number(item.price) * item.quantity).toFixed(2) %>
-                </p>
-                <div class="d-flex gap-2 align-items-center mt-2 flex-wrap">
-                  <form action="/cart/update/<%= item.id || item.productId %>" method="POST" class="d-flex gap-2 align-items-center">
-                    <div class="input-group input-group-sm" style="width: 160px;">
-                      <button type="button" class="btn btn-outline-secondary btn-qty-change" data-change="-1">-</button>
-                      <input 
-                        type="number" 
-                        name="quantity" 
-                        min="1" 
-                        step="1" 
-                        inputmode="numeric"
-                        class="form-control text-center" 
-                        value="<%= item.quantity %>">
-                      <button type="button" class="btn btn-outline-secondary btn-qty-change" data-change="1">+</button>
-                    </div>
-                    <button class="btn btn-primary btn-sm btn-action">Update</button>
-                  </form>
-                  <form action="/cart/remove/<%= item.id || item.productId %>" method="POST">
-                    <button class="btn btn-danger btn-sm btn-action">Remove</button>
-                  </form>
-                </div>
-
+              <div class="cart-remove">
+                <form action="/cart/remove/<%= item.id || item.productId %>" method="POST">
+                  <button class="remove-btn" aria-label="Remove item" title="Remove">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M3 6h18"></path>
+                      <path d="M8 6V4h8v2"></path>
+                      <path d="M6 6l1 14h10l1-14"></path>
+                      <path d="M10 11v6"></path>
+                      <path d="M14 11v6"></path>
+                    </svg>
+                  </button>
+                </form>
               </div>
             </div>
 
@@ -175,22 +297,45 @@
             <h5>Order Summary</h5>
             <hr>
 
+            <% const deliveryThreshold = 50; %>
+            <% const deliveryFee = total >= deliveryThreshold ? 0 : 4.99; %>
+            <% const remainingForFree = Math.max(0, deliveryThreshold - total); %>
+            <% const grandTotal = total + deliveryFee; %>
+
             <p class="d-flex justify-content-between mb-2">
-              <span>Total</span>
-              <strong>$<%= total.toFixed(2) %></strong>
+              <span>Subtotal</span>
+              <span>$<%= total.toFixed(2) %></span>
+            </p>
+            <p class="d-flex justify-content-between mb-2">
+              <span>Delivery Fee</span>
+              <span>$<%= deliveryFee.toFixed(2) %></span>
+            </p>
+            <p class="summary-note mb-3">
+              <% if (remainingForFree > 0) { %>
+                Add $<%= remainingForFree.toFixed(2) %> more to get free delivery!
+              <% } else { %>
+                You have free delivery.
+              <% } %>
+            </p>
+            <hr>
+            <p class="d-flex justify-content-between mb-3">
+              <strong>Total</strong>
+              <strong>$<%= grandTotal.toFixed(2) %></strong>
             </p>
 
-            <form action="/checkout" method="GET" class="d-grid gap-2 mt-3">
-              <button class="btn btn-success btn-action py-2">Proceed to Checkout</button>
-            </form>
-
-            <form action="/cart/clear" method="POST" class="d-grid gap-2 mt-2">
-              <button class="btn btn-warning btn-action py-2">Clear Cart</button>
-            </form>
-
-            <a href="/" class="btn btn-secondary btn-action w-100 mt-2 py-2">
-              Continue Shopping
-            </a>
+            <div class="action-stack">
+              <form action="/checkout" method="GET">
+                <button class="btn btn-success btn-action w-100 py-2">Proceed to Checkout</button>
+              </form>
+              <div class="action-row">
+                <a href="/" class="btn btn-outline-success btn-action py-2">
+                  Continue Shopping
+                </a>
+                <form action="/cart/clear" method="POST">
+                  <button class="btn btn-outline-danger btn-action w-100 py-2">Clear Cart</button>
+                </form>
+              </div>
+            </div>
 
           </div>
         </div>
@@ -206,12 +351,14 @@
   // Simple quantity +/- controls enforcing minimum of 1
   document.querySelectorAll('.btn-qty-change').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const input = e.target.closest('.input-group').querySelector('input[name="quantity"]');
+      const form = e.target.closest('form');
+      const input = form.querySelector('input[name="quantity"]');
       if (!input) return;
       const delta = Number(e.target.dataset.change || 0);
       const current = Number(input.value) || 1;
       const next = Math.max(1, current + delta);
       input.value = next;
+      form.submit();
     });
   });
 </script>

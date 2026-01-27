@@ -140,10 +140,8 @@
           </tr>
         </thead>
         <tbody>
-          <% let grandTotal = 0; %>
           <% order.items.forEach((item) => { 
                const lineTotal = Number(item.quantity) * Number(item.price);
-               grandTotal += lineTotal;
           %>
             <tr>
               <td>
@@ -168,11 +166,15 @@
       <div style="min-width: 260px;">
         <div class="d-flex justify-content-between muted">
           <span>Subtotal</span>
-          <span>$<%= grandTotal.toFixed(2) %></span>
+          <span>$<%= Number(order.subtotal || 0).toFixed(2) %></span>
+        </div>
+        <div class="d-flex justify-content-between muted">
+          <span>Delivery</span>
+          <span>$<%= Number(order.shippingFee || 0).toFixed(2) %></span>
         </div>
         <div class="d-flex justify-content-between fw-bold fs-5 totals">
-          <span>Total</span>
-          <span>$<%= grandTotal.toFixed(2) %></span>
+          <span>Grand Total</span>
+          <span>$<%= Number(order.grandTotal || order.total || 0).toFixed(2) %></span>
         </div>
       </div>
     </div>

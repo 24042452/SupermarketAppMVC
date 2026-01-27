@@ -4,6 +4,9 @@
   const hasCart = Array.isArray(cart) && cart.length > 0;
   const cartCount = hasCart ? cart.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
   const cartTotal = hasCart ? cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0;
+  const shippingThreshold = 50;
+  const shippingFee = cartTotal >= shippingThreshold ? 0 : 4.99;
+  const cartGrandTotal = cartTotal + shippingFee;
 %>
 
 <nav class="navbar navbar-expand-sm nav-slim py-3 custom-navbar">
@@ -13,53 +16,24 @@
     <a class="navbar-brand fs-4" href="/">Dylan's Supermarket</a>
 
     <!-- Mobile Toggle -->
-    <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <!-- Navbar Items -->
     <div class="collapse navbar-collapse" id="collapsibleNavbar">
-      <ul class="navbar-nav ms-auto align-items-center">
-
+      <ul class="navbar-nav ms-auto align-items-center nav-actions">
         <% if (user) { %>
-
-          <!-- Greeting -->
-          <li class="nav-item me-3 text-white fw-semibold small">
-            Hello, <%= user.username %>
+          <li class="nav-item me-3">
+            <a class="nav-link" href="/">Products</a>
           </li>
 
-          <!-- Cart Dropdown -->
-          <li class="nav-item dropdown cart position-relative me-3">
-            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+          <!-- Cart Sidebar Trigger -->
+          <li class="nav-item me-3">
+            <button class="nav-link d-flex align-items-center cart-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#cartSidebar" aria-controls="cartSidebar">
               <i class="bi bi-cart3 fs-5 me-1"></i>
               Cart (<%= cartCount %>)
-            </a>
-
-            <div class="dropdown-menu dropdown-menu-end p-3 shadow rounded-4 cart-dropdown">
-
-              <% if (!hasCart) { %>
-                <div class="text-center text-muted py-3">Your cart is empty.</div>
-              <% } else { %>
-
-                <% cart.forEach(item => { %>
-                  <div class="d-flex gap-3 align-items-center border-bottom pb-2 mb-2">
-                    <img src="/images/<%= item.image %>" alt="<%= item.productName %>" class="cart-thumb">
-                    <div class="flex-grow-1">
-                      <div class="fw-semibold"><%= item.productName %></div>
-                      <div class="text-muted small">Qty: <%= item.quantity %> x $<%= (item.price * item.quantity).toFixed(2) %></div>
-                    </div>
-                  </div>
-                <% }) %>
-
-                <div class="d-flex justify-content-between mt-2 mb-3 fw-bold">
-                  <span>Total</span>
-                  <span class="text-primary">$<%= cartTotal.toFixed(2) %></span>
-                </div>
-
-                <a href="/cart" class="btn btn-primary btn-sm w-100 rounded-pill">View Cart</a>
-              <% } %>
-
-            </div>
+            </button>
           </li>
 
           <!-- Order History -->
@@ -67,67 +41,354 @@
             <a class="nav-link" href="/orders">Order History</a>
           </li>
 
-          <!-- Logout -->
-          <li class="nav-item">
-            <a class="nav-link logout-btn d-flex align-items-center gap-1" href="/logout">
-              <i class="bi bi-box-arrow-right"></i>
-              Logout
+          <!-- Profile Dropdown -->
+          <li class="nav-item dropdown profile-dropdown">
+            <a class="nav-link d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <img
+                class="profile-avatar"
+                alt="Profile"
+                src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='24' fill='%23e6f6ea'/><circle cx='24' cy='20' r='9' fill='%2394a3b8'/><path d='M10 42c2.8-7.4 10.1-12 14-12s11.2 4.6 14 12' fill='%2394a3b8'/></svg>">
             </a>
+            <div class="dropdown-menu dropdown-menu-end profile-menu">
+              <div class="px-3 py-2 small text-muted">Hello, <strong><%= user.username %></strong></div>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item d-flex align-items-center gap-2" href="/logout">
+                <i class="bi bi-box-arrow-right"></i>
+                Logout
+              </a>
+            </div>
           </li>
-
         <% } else { %>
-
-          <!-- Login -->
+          <li class="nav-item me-3">
+            <a class="nav-link" href="/">Products</a>
+          </li>
           <li class="nav-item me-2">
-            <a class="nav-link logout-btn" href="/login">Login</a>
+            <a class="btn btn-outline-success btn-pill" href="/login">Login</a>
           </li>
-
-          <!-- Register -->
           <li class="nav-item">
-            <a class="nav-link logout-btn" href="/register">Register</a>
+            <a class="btn btn-success btn-pill" href="/register">Register</a>
           </li>
-
         <% } %>
-
       </ul>
     </div>
   </div>
 </nav>
 
+<div class="offcanvas offcanvas-end cart-sidebar" tabindex="-1" id="cartSidebar" aria-labelledby="cartSidebarLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="cartSidebarLabel">Shopping Cart</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column">
+    <% if (!hasCart) { %>
+      <div class="sidebar-empty">
+        <div class="sidebar-empty-icon">
+          <i class="bi bi-bag"></i>
+        </div>
+        <div class="fw-semibold">Your cart is empty</div>
+        <div class="text-muted small">Start shopping to add items.</div>
+        <a href="/" class="btn sidebar-checkout mt-3">Start Shopping</a>
+      </div>
+    <% } else { %>
+      <div class="sidebar-items">
+        <% cart.forEach(item => { %>
+          <div class="sidebar-item">
+            <img src="/images/<%= item.image %>" alt="<%= item.productName %>" class="sidebar-thumb">
+            <div class="sidebar-info">
+              <div class="sidebar-title"><%= item.productName %></div>
+              <div class="sidebar-price">$<%= (item.price * item.quantity).toFixed(2) %></div>
+              <form action="/cart/update/<%= item.id || item.productId %>" method="POST" class="sidebar-qty">
+                <button type="button" class="sidebar-qty-btn sidebar-qty-change" data-change="-1" aria-label="Decrease quantity">-</button>
+                <input type="number" name="quantity" min="1" step="1" inputmode="numeric" class="sidebar-qty-input" value="<%= item.quantity %>" readonly>
+                <button type="button" class="sidebar-qty-btn sidebar-qty-change" data-change="1" aria-label="Increase quantity">+</button>
+              </form>
+            </div>
+            <form action="/cart/remove/<%= item.id || item.productId %>" method="POST">
+              <button class="sidebar-remove" aria-label="Remove item" title="Remove">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </form>
+          </div>
+        <% }) %>
+      </div>
+
+      <div class="sidebar-summary mt-auto">
+        <div class="d-flex justify-content-between mb-2">
+          <span>Subtotal</span>
+          <span>$<%= cartTotal.toFixed(2) %></span>
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+          <span>Shipping Fee</span>
+          <span>$<%= shippingFee.toFixed(2) %></span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="d-flex justify-content-between fw-semibold mb-3">
+          <span>Total</span>
+          <span>$<%= cartGrandTotal.toFixed(2) %></span>
+        </div>
+        <a href="/checkout" class="btn sidebar-checkout">Checkout</a>
+        <a href="/cart" class="btn sidebar-cart-link mt-2">Proceed To Cart</a>
+      </div>
+    <% } %>
+  </div>
+</div>
+
 <style>
-  .cart-dropdown {
-    min-width: 320px;
-    max-height: 420px;
-    overflow-y: auto;
-    border: 1px solid #e2e8f0;
+  .cart-trigger {
+    border: none;
+    background: transparent;
+    padding: 0;
   }
 
-  .cart-dropdown::-webkit-scrollbar { width: 6px; }
-  .cart-dropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .cart-sidebar {
+    background: #faf7f2;
+    width: 380px;
+  }
 
-  .cart-thumb {
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-    background: #f8fbff;
-    border: 1px solid #e2e8f0;
+  .cart-sidebar .offcanvas-header {
+    border-bottom: 1px solid #efe7dd;
+    padding: 20px 22px;
+  }
+
+  .cart-sidebar .offcanvas-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .cart-sidebar .offcanvas-body {
+    padding: 22px;
+    gap: 18px;
+  }
+
+  .sidebar-items {
+    display: grid;
+    gap: 16px;
+  }
+
+  .sidebar-item {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 84px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    box-shadow: 0 8px 20px rgba(17, 24, 39, 0.05);
+  }
+
+  .sidebar-thumb {
+    width: 78px;
+    height: 78px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #f3f4f6;
+    border: 1px solid #eee;
+  }
+
+  .sidebar-title {
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .sidebar-price {
+    color: #111827;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-qty {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sidebar-qty-btn {
+    width: 32px;
+    height: 32px;
     border-radius: 10px;
-    padding: 4px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-weight: 700;
+    color: #111827;
   }
 
-  .navbar .dropdown-menu { animation: fadeIn 0.2s ease-in-out; }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+  .sidebar-qty-input {
+    width: 34px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .sidebar-remove {
+    border: none;
+    background: transparent;
+    color: #ef4444;
+    font-size: 1.1rem;
+    padding: 6px;
+  }
+
+  .sidebar-summary {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 8px 20px rgba(17, 24, 39, 0.05);
+  }
+
+  .summary-divider {
+    height: 1px;
+    background: #eee;
+    margin: 6px 0 12px;
+  }
+
+  .sidebar-checkout {
+    width: 100%;
+    background: #22c55e;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 18px;
+    font-weight: 700;
+  }
+
+  .sidebar-checkout:hover {
+    color: #fff;
+    background: #16a34a;
+  }
+
+  .sidebar-cart-link {
+    width: 100%;
+    background: #fff;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-weight: 700;
+  }
+
+  .sidebar-cart-link:hover {
+    color: #111827;
+    border-color: #d1d5db;
+    background: #f9fafb;
+  }
+
+  .sidebar-empty {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 26px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(17, 24, 39, 0.05);
+  }
+
+  .sidebar-empty-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #6b7280;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin-bottom: 10px;
   }
 
   .custom-navbar {
-    background: linear-gradient(90deg, #0f1b2d 0%, #0c2d52 100%);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    background: #f6f3ee;
+    border-bottom: 1px solid #e7e1d9;
   }
 
-  .navbar-brand, .nav-link { color: #eaf2ff !important; }
-  .navbar-brand:hover, .nav-link:hover { color: #ffd166 !important; }
+  .custom-navbar .navbar-brand {
+    color: #2b2b2b !important;
+    font-weight: 800;
+  }
 
-  .logout-btn { transition: color 0.3s ease; }
+  .custom-navbar .nav-link {
+    color: #2b2b2b !important;
+    font-weight: 600;
+  }
+
+  .custom-navbar .nav-link:hover {
+    color: #3a7f4c !important;
+  }
+
+  .btn-pill {
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-weight: 700;
+  }
+
+  .custom-navbar .cart-trigger {
+    color: #2b2b2b !important;
+  }
+
+  .btn-outline-success.btn-pill {
+    border-color: #3a7f4c;
+    color: #3a7f4c;
+    background: transparent;
+  }
+
+  .btn-outline-success.btn-pill:hover {
+    background: #3a7f4c;
+    color: #fff;
+  }
+
+  .btn-success.btn-pill {
+    background: #3a7f4c;
+    border-color: #3a7f4c;
+    color: #fff;
+  }
+
+  .btn-success.btn-pill:hover {
+    background: #2f6a3f;
+    border-color: #2f6a3f;
+    color: #fff;
+  }
+
+  .nav-center .nav-link {
+    padding: 8px 16px;
+  }
+
+  .profile-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid #d9d2c8;
+    background: #fff;
+  }
+
+  .profile-menu {
+    border-radius: 12px;
+    border: 1px solid #e7e1d9;
+    box-shadow: 0 12px 24px rgba(17, 24, 39, 0.12);
+    right: 0;
+    left: auto;
+  }
+
+  @media (min-width: 576px) {
+    .profile-dropdown:hover .dropdown-menu {
+      display: block;
+      margin-top: 6px;
+    }
+  }
 </style>
+
+<script>
+  document.querySelectorAll('.sidebar-qty-change').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const form = e.target.closest('form');
+      const input = form.querySelector('input[name="quantity"]');
+      if (!input) return;
+      const delta = Number(e.target.dataset.change || 0);
+      const current = Number(input.value) || 1;
+      const next = Math.max(1, current + delta);
+      input.value = next;
+      form.submit();
+    });
+  });
+</script>

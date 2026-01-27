@@ -3,6 +3,13 @@ const ReviewModel = require('../models/reviewModel');
 
 const LOW_STOCK_THRESHOLD = 10;
 const CATEGORY_OPTIONS = ['fruits', 'vegetable', 'baked', 'beverage', 'raw'];
+const CATEGORY_LABELS = {
+    fruits: 'Fruits',
+    vegetable: 'Vegetables',
+    baked: 'Baked',
+    beverage: 'Beverage',
+    raw: 'Raw Food'
+};
 const BANNED_REVIEW_WORDS = ['spam', 'scam', 'fake', 'idiot', 'stupid', 'damn', 'shit', 'fuck', 'bitch', 'bastard'];
 
 const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -128,14 +135,31 @@ const showProductById = (req, res) => {
                     ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
                     : null;
 
-                res.render('product', { 
-                    product: results[0], 
-                    user: req.session ? req.session.user : null,
-                    cart: req.session ? (req.session.cart || []) : [],
-                    reviews,
-                    averageRating,
-                    messages: req.flash('error'),
-                    success: req.flash('success')
+                ProductModel.getAllProducts((allErr, allProducts) => {
+                    if (allErr) {
+                        console.error('Error retrieving related products:', allErr);
+                    }
+
+                    const product = results[0];
+                    const productCategory = getCategory(product);
+                    const relatedCategoryLabel = CATEGORY_LABELS[productCategory] || (productCategory || 'Products');
+                    const relatedProducts = Array.isArray(allProducts)
+                        ? allProducts
+                            .filter((p) => p.id !== product.id && getCategory(p) === productCategory)
+                            .slice(0, 3)
+                        : [];
+
+                    res.render('product', { 
+                        product, 
+                        user: req.session ? req.session.user : null,
+                        cart: req.session ? (req.session.cart || []) : [],
+                        reviews,
+                        averageRating,
+                        relatedProducts,
+                        relatedCategoryLabel,
+                        messages: req.flash('error'),
+                        success: req.flash('success')
+                    });
                 });
             });
         } else {
