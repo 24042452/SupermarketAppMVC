@@ -41,6 +41,16 @@
             <a class="nav-link" href="/orders">Order History</a>
           </li>
 
+          <!-- Subscription -->
+          <li class="nav-item me-3">
+            <a class="nav-link" href="/subscription">Subscription</a>
+          </li>
+          <% if (user && (user.role === 'admin' || user.role === 'superadmin')) { %>
+            <li class="nav-item me-3">
+              <a class="nav-link" href="/admin/refunds">Refunds</a>
+            </li>
+          <% } %>
+
           <!-- Profile Dropdown -->
           <li class="nav-item dropdown profile-dropdown">
             <a class="nav-link d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">

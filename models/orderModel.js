@@ -1,5 +1,27 @@
 const db = require('../db');
 
+const ensurePaymentColumns = (callback) => {
+    const statements = [
+        'ALTER TABLE orders ADD COLUMN payment_provider VARCHAR(20) NULL',
+        'ALTER TABLE orders ADD COLUMN payment_id VARCHAR(255) NULL',
+        'ALTER TABLE orders ADD COLUMN payment_amount DECIMAL(10,2) NULL',
+        'ALTER TABLE orders ADD COLUMN refund_status VARCHAR(20) NULL',
+        'ALTER TABLE orders ADD COLUMN refunded_amount DECIMAL(10,2) NULL'
+    ];
+
+    let index = 0;
+    const next = () => {
+        if (index >= statements.length) return callback(null);
+        db.query(statements[index], (err) => {
+            if (err && err.code !== 'ER_DUP_FIELDNAME') return callback(err);
+            index += 1;
+            next();
+        });
+    };
+
+    next();
+};
+
 // Create a new order
 const createOrder = (userId, total, callback) => {
     const sql = "INSERT INTO orders (user_id, total) VALUES (?, ?)";
@@ -37,6 +59,7 @@ const getOrderItems = (orderId, callback) => {
 const getOrderDetails = (orderId, callback) => {
     const sql = `
         SELECT o.id AS orderId, o.user_id AS userId, o.total, o.order_date, o.status,
+               o.payment_provider, o.payment_id, o.refund_status, o.refunded_amount,
                oi.product_id, oi.quantity, oi.price_each,
                p.productName, p.image
         FROM orders o
@@ -62,6 +85,40 @@ const updateOrderStatus = (orderId, status, callback) => {
     db.query(sql, [status, orderId], callback);
 };
 
+const updatePaymentInfo = (orderId, payment, callback) => {
+    const sql = `
+        UPDATE orders
+        SET payment_provider = ?, payment_id = ?, payment_amount = ?
+        WHERE id = ?
+    `;
+    db.query(sql, [payment.provider, payment.paymentId, payment.amount, orderId], (err) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            return ensurePaymentColumns((alterErr) => {
+                if (alterErr) return callback(alterErr);
+                db.query(sql, [payment.provider, payment.paymentId, payment.amount, orderId], callback);
+            });
+        }
+        callback(err);
+    });
+};
+
+const updateRefundStatus = (orderId, refundStatus, refundedAmount, callback) => {
+    const sql = `
+        UPDATE orders
+        SET refund_status = ?, refunded_amount = ?
+        WHERE id = ?
+    `;
+    db.query(sql, [refundStatus, refundedAmount, orderId], (err) => {
+        if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+            return ensurePaymentColumns((alterErr) => {
+                if (alterErr) return callback(alterErr);
+                db.query(sql, [refundStatus, refundedAmount, orderId], callback);
+            });
+        }
+        callback(err);
+    });
+};
+
 module.exports = {
     createOrder,
     addOrderItem,
@@ -69,5 +126,7 @@ module.exports = {
     getOrderItems,   
     getOrderDetails,
     getAllOrders,
-    updateOrderStatus
+    updateOrderStatus,
+    updatePaymentInfo,
+    updateRefundStatus
 };

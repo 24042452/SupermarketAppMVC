@@ -232,6 +232,12 @@
             <i class="bi bi-truck"></i>
             <%= statusLabel %>
           </p>
+          <% if (order.refundRequest) { %>
+            <p class="status-badge <%= order.refundRequest.status === 'approved' ? 'status-delivered' : order.refundRequest.status === 'denied' ? 'status-pending' : 'status-delivery' %>">
+              <i class="bi bi-arrow-counterclockwise"></i>
+              Refund: <%= order.refundRequest.status %>
+            </p>
+          <% } %>
 
           <!-- Products -->
           <% order.items.forEach(item => { 

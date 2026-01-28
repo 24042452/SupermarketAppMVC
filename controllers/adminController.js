@@ -1,6 +1,15 @@
 const ProductModel = require('../models/productModel');
 const UserModel = require('../models/userModel');
 const OrderModel = require('../models/orderModel');
+const RefundModel = require('../models/refundModel');
+const PayPalService = require('../services/paypal');
+const Stripe = require('stripe');
+
+const getStripeClient = () => {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) return null;
+    return new Stripe(key);
+};
 
 // Admin dashboard with quick stats and latest orders
 const showDashboard = (req, res) => {
@@ -298,6 +307,122 @@ const updateUser = (req, res) => {
     });
 };
 
+const manageRefunds = (req, res) => {
+    RefundModel.getAll((err, refunds) => {
+        if (err) return res.status(500).send('Error loading refunds');
+        res.render('adminRefunds', {
+            user: req.session.user,
+            refunds,
+            messages: req.flash('error'),
+            success: req.flash('success')
+        });
+    });
+};
+
+const approveRefund = (req, res) => {
+    const refundId = req.params.id;
+    const amount = Number(req.body.amount || 0);
+    const adminNote = req.body.adminNote || '';
+    const adminId = req.session.user?.id || null;
+
+    if (!amount || amount <= 0) {
+        req.flash('error', 'Refund amount must be greater than 0.');
+        return res.redirect('/admin/refunds');
+    }
+
+    RefundModel.getById(refundId, (err, rows) => {
+        if (err || !rows || !rows.length) {
+            req.flash('error', 'Refund request not found.');
+            return res.redirect('/admin/refunds');
+        }
+
+        const refund = rows[0];
+        if (refund.status !== 'pending') {
+            req.flash('error', 'Refund request already processed.');
+            return res.redirect('/admin/refunds');
+        }
+
+        OrderModel.getOrderDetails(refund.order_id, async (orderErr, orderRows) => {
+            if (orderErr || !orderRows || !orderRows.length) {
+                req.flash('error', 'Order not found.');
+                return res.redirect('/admin/refunds');
+            }
+
+            const orderTotal = Number(orderRows[0].total || 0);
+            if (amount > orderTotal) {
+                req.flash('error', 'Refund amount cannot exceed order total.');
+                return res.redirect('/admin/refunds');
+            }
+
+            try {
+                if (refund.provider === 'stripe') {
+                    const stripe = getStripeClient();
+                    if (!stripe) {
+                        req.flash('error', 'Stripe is not configured.');
+                        return res.redirect('/admin/refunds');
+                    }
+                    await stripe.refunds.create({
+                        payment_intent: refund.payment_id,
+                        amount: Math.round(amount * 100)
+                    });
+                } else if (refund.provider === 'paypal') {
+                    const result = await PayPalService.refundCapture(refund.payment_id, amount);
+                    if (!result.ok) {
+                        console.error('PayPal refund failed:', result.data);
+                        req.flash('error', 'PayPal refund failed.');
+                        return res.redirect('/admin/refunds');
+                    }
+                } else {
+                    req.flash('error', 'Unsupported payment provider.');
+                    return res.redirect('/admin/refunds');
+                }
+
+                RefundModel.updateStatus(refund.id, 'approved', adminId, adminNote, amount, (updateErr) => {
+                    if (updateErr) console.error('Refund update error:', updateErr);
+                    const refundStatus = amount < orderTotal ? 'partial' : 'refunded';
+                    OrderModel.updateRefundStatus(refund.order_id, refundStatus, amount, (orderUpdateErr) => {
+                        if (orderUpdateErr) console.error('Order refund status update error:', orderUpdateErr);
+                        req.flash('success', 'Refund approved and processed.');
+                        return res.redirect('/admin/refunds');
+                    });
+                });
+            } catch (refundErr) {
+                console.error('Refund processing error:', refundErr);
+                req.flash('error', 'Refund processing failed.');
+                return res.redirect('/admin/refunds');
+            }
+        });
+    });
+};
+
+const denyRefund = (req, res) => {
+    const refundId = req.params.id;
+    const adminNote = req.body.adminNote || '';
+    const adminId = req.session.user?.id || null;
+
+    RefundModel.getById(refundId, (err, rows) => {
+        if (err || !rows || !rows.length) {
+            req.flash('error', 'Refund request not found.');
+            return res.redirect('/admin/refunds');
+        }
+
+        const refund = rows[0];
+        if (refund.status !== 'pending') {
+            req.flash('error', 'Refund request already processed.');
+            return res.redirect('/admin/refunds');
+        }
+
+        RefundModel.updateStatus(refund.id, 'denied', adminId, adminNote, refund.amount, (updateErr) => {
+            if (updateErr) console.error('Refund update error:', updateErr);
+            OrderModel.updateRefundStatus(refund.order_id, 'denied', 0, (orderUpdateErr) => {
+                if (orderUpdateErr) console.error('Order refund status update error:', orderUpdateErr);
+                req.flash('success', 'Refund denied.');
+                return res.redirect('/admin/refunds');
+            });
+        });
+    });
+};
+
 module.exports = {
     showDashboard,
     manageUsers,
@@ -306,5 +431,8 @@ module.exports = {
     updateOrderStatus,
     createUser,
     updateUser,
-    showOrderDetail
+    showOrderDetail,
+    manageRefunds,
+    approveRefund,
+    denyRefund
 };

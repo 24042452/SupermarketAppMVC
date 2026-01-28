@@ -200,6 +200,24 @@
         </div>
 
         <div class="order-total">Grand Total: $<%= Number(order.grandTotal || order.total || 0).toFixed(2) %></div>
+
+        <div class="mt-3">
+          <h6 class="fw-bold mb-2">Refund</h6>
+          <% if (refundRequest) { %>
+            <div class="text-muted small">Status: <%= refundRequest.status %> &nbsp;|&nbsp; Requested: $<%= Number(refundRequest.amount || 0).toFixed(2) %></div>
+            <% if ((refundRequest.status || '').toLowerCase() === 'approved') { %>
+              <div class="text-muted small mt-1">Refund type: <%= (order.refund_status === 'refunded') ? 'Full' : (order.refund_status === 'partial' ? 'Partial' : '—') %></div>
+            <% } %>
+            <% if (refundRequest.admin_note) { %>
+              <div class="text-muted small mt-1">Admin note: <%= refundRequest.admin_note %></div>
+            <% } %>
+          <% } else { %>
+            <form action="/orders/<%= order.id %>/refund" method="POST" class="d-flex flex-wrap gap-2 align-items-center">
+              <button type="submit" class="btn btn-soft">Request Refund</button>
+            </form>
+            <div class="text-muted small mt-1">Refunds are reviewed by admin (full or partial).</div>
+          <% } %>
+        </div>
         <div class="mt-3 d-flex gap-2 justify-content-end">
           <a href="/orders/<%= order.id %>/invoice" class="btn btn-soft d-inline-flex align-items-center gap-2">
             <i class="bi bi-receipt"></i>

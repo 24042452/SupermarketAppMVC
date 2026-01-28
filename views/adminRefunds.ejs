@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refund Requests</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/css/theme.css">
+  <style>
+    body {
+      background: #faf7f2;
+      font-family: 'Segoe UI', sans-serif;
+      color: #111827;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 30px auto;
+      background: #fff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+    }
+    .title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .badge-status {
+      text-transform: capitalize;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-pending { background: #fff4e5; color: #b45309; }
+    .badge-approved { background: #dcfce7; color: #15803d; }
+    .badge-denied { background: #fee2e2; color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <%- include('partials/navbar', { user: user, cart: [] }) %>
+
+  <div class="page">
+    <div class="title">Refund Requests</div>
+
+    <% if (messages && messages.length) { %>
+      <div class="alert alert-danger"><%= messages.join('<br>') %></div>
+    <% } %>
+    <% if (success && success.length) { %>
+      <div class="alert alert-success"><%= success.join('<br>') %></div>
+    <% } %>
+
+    <% if (!refunds || refunds.length === 0) { %>
+      <p class="text-muted">No refund requests found.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-borderless align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Order</th>
+              <th>User</th>
+              <th>Provider</th>
+              <th>Requested</th>
+              <th>Status</th>
+              <th>Refund Type</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% refunds.forEach(refund => { %>
+              <tr>
+                <td>#<%= refund.order_id %></td>
+                <td><%= refund.username || refund.email || 'User' %></td>
+                <td><%= refund.provider %></td>
+                <td>$<%= Number(refund.amount || 0).toFixed(2) %></td>
+                <td>
+                  <% const status = (refund.status || 'pending').toLowerCase(); %>
+                  <% const badgeClass = status === 'approved' ? 'badge-approved' : status === 'denied' ? 'badge-denied' : 'badge-pending'; %>
+                  <span class="badge-status <%= badgeClass %>"><%= status %></span>
+                </td>
+                <td>
+                  <% 
+                    const orderTotal = Number(refund.order_total || 0);
+                    const refundType = refund.amount && orderTotal && Number(refund.amount) >= orderTotal ? 'Full' : 'Partial';
+                  %>
+                  <span class="text-muted"><%= refundType %></span>
+                </td>
+                <td>
+                  <% if (status === 'pending') { %>
+                    <form action="/admin/refunds/<%= refund.id %>/approve" method="POST" class="d-flex flex-wrap gap-2 mb-2" onsubmit="return confirm('Approve this refund?');">
+                      <input type="number" name="amount" step="0.01" min="0.01" max="<%= Number(refund.order_total || refund.amount || 0).toFixed(2) %>" value="<%= Number(refund.amount || 0).toFixed(2) %>" class="form-control form-control-sm" style="max-width: 120px;" required>
+                      <select name="adminNote" class="form-select form-select-sm" style="max-width: 200px;">
+                        <option value="Full refund">Full refund</option>
+                        <option value="Partial refund">Partial refund</option>
+                      </select>
+                      <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                    </form>
+                    <form action="/admin/refunds/<%= refund.id %>/deny" method="POST" class="d-flex flex-wrap gap-2" onsubmit="return confirm('Deny this refund?');">
+                      <input type="text" name="adminNote" placeholder="Reason" class="form-control form-control-sm" style="max-width: 200px;" required>
+                      <button type="submit" class="btn btn-outline-danger btn-sm">Deny</button>
+                    </form>
+                  <% } else { %>
+                    <div class="text-muted small">Processed</div>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>

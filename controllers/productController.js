@@ -1,5 +1,6 @@
 const ProductModel = require('../models/productModel');
 const ReviewModel = require('../models/reviewModel');
+const StripeSubscriptionModel = require('../models/stripeSubscriptionModel');
 
 const LOW_STOCK_THRESHOLD = 10;
 const CATEGORY_OPTIONS = ['fruits', 'vegetable', 'baked', 'beverage', 'raw'];
@@ -104,13 +105,31 @@ const showAllProducts = (req, res) => {
             });
         }
 
-        res.render('shopping', { 
-            products: productsWithStock,
-            user: req.session.user || null,
-            cart: req.session.cart || [],
-            search: search || "",
-            sort,
-            category: categoryFilter
+        const user = req.session.user || null;
+        if (!user) {
+            return res.render('shopping', { 
+                products: productsWithStock,
+                user: null,
+                cart: req.session.cart || [],
+                search: search || "",
+                sort,
+                category: categoryFilter,
+                subscription: null
+            });
+        }
+
+        StripeSubscriptionModel.getByUserId(user.id, (subErr, rows) => {
+            if (subErr) console.error('Error loading subscription for homepage:', subErr);
+            const subscription = rows && rows[0] ? rows[0] : null;
+            res.render('shopping', { 
+                products: productsWithStock,
+                user,
+                cart: req.session.cart || [],
+                search: search || "",
+                sort,
+                category: categoryFilter,
+                subscription
+            });
         });
     });
 };

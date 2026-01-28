@@ -179,6 +179,24 @@
       </div>
     </div>
 
+    <div class="mt-4">
+      <h6 class="fw-bold mb-2">Refund</h6>
+      <% if (refundRequest) { %>
+        <div class="text-muted small">Status: <%= refundRequest.status %> &nbsp;|&nbsp; Requested: $<%= Number(refundRequest.amount || 0).toFixed(2) %></div>
+        <% if ((refundRequest.status || '').toLowerCase() === 'approved') { %>
+          <div class="text-muted small mt-1">Refund type: <%= (order.refund_status === 'refunded') ? 'Full' : (order.refund_status === 'partial' ? 'Partial' : '—') %></div>
+        <% } %>
+        <% if (refundRequest.admin_note) { %>
+          <div class="text-muted small mt-1">Admin note: <%= refundRequest.admin_note %></div>
+        <% } %>
+      <% } else if (user && user.role !== 'admin' && user.role !== 'superadmin') { %>
+        <form action="/orders/<%= order.id %>/refund" method="POST" class="d-flex flex-wrap gap-2 align-items-center">
+          <button type="submit" class="btn btn-ghost">Request Refund</button>
+        </form>
+        <div class="text-muted small mt-1">Refunds are reviewed by admin (full or partial).</div>
+      <% } %>
+    </div>
+
     <% const backUrl = user && user.role === 'admin' ? '/admin/orders' : '/orders'; %>
     <div class="d-flex justify-content-between align-items-center mt-4">
       <a href="<%= backUrl %>" class="btn btn-ghost d-inline-flex align-items-center gap-2">

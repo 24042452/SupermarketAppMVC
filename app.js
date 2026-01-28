@@ -25,6 +25,9 @@ const { checkAuthenticated, checkAdmin } = require('./middlewares/middleware');
 // View engine
 app.set('view engine', 'ejs');
 
+// Stripe webhook needs raw body
+app.post('/stripe/webhook', express.raw({ type: 'application/json' }), orderController.handleStripeWebhook);
+
 // Static files & form parsing
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
@@ -62,6 +65,9 @@ app.get('/admin/orders', checkAuthenticated, checkAdmin, AdminController.manageO
 app.get('/admin/orders/:id', checkAuthenticated, checkAdmin, AdminController.showOrderDetail);
 app.get('/admin/orders/:id/invoice', checkAuthenticated, checkAdmin, orderController.showInvoice);
 app.post('/admin/orders/:id/status', checkAuthenticated, checkAdmin, AdminController.updateOrderStatus);
+app.get('/admin/refunds', checkAuthenticated, checkAdmin, AdminController.manageRefunds);
+app.post('/admin/refunds/:id/approve', checkAuthenticated, checkAdmin, AdminController.approveRefund);
+app.post('/admin/refunds/:id/deny', checkAuthenticated, checkAdmin, AdminController.denyRefund);
 
 app.get('/inventory', checkAuthenticated, checkAdmin, ProductController.showAllProducts);
 app.post('/inventory/:id/stock', checkAuthenticated, checkAdmin, ProductController.updateStock);
@@ -136,6 +142,10 @@ app.get('/nets-qr/fail', (req, res) => {
 app.post('/stripe/create-session', orderController.createStripeCheckoutSession);
 app.get('/stripe/success', orderController.handleStripeSuccess);
 app.get('/stripe/cancel', orderController.handleStripeCancel);
+app.post('/stripe/subscription/create', orderController.createStripeSubscriptionSession);
+app.get('/stripe/subscription/success', orderController.handleStripeSubscriptionSuccess);
+app.get('/stripe/subscription/cancel', orderController.handleStripeSubscriptionCancel);
+app.get('/subscription', orderController.showSubscription);
 
 // ===========================
 //       ORDER HISTORY
@@ -143,6 +153,7 @@ app.get('/stripe/cancel', orderController.handleStripeCancel);
 app.get('/orders', orderController.showOrders);
 app.get('/orders/:id', orderController.showOrderDetails);
 app.get('/orders/:id/invoice', orderController.showInvoice);
+app.post('/orders/:id/refund', checkAuthenticated, orderController.requestRefund);
 
 // ===========================
 //          SERVER

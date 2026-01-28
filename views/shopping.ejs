@@ -111,6 +111,31 @@
       margin: 26px 0;
     }
 
+    .subscription-banner {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow: 0 10px 22px rgba(17, 24, 39, 0.06);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 18px;
+    }
+
+    .subscription-title {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #0f172a;
+    }
+
+    .subscription-text {
+      color: #6b7280;
+      margin-bottom: 0;
+    }
+
     .product-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -286,6 +311,28 @@
   <div class="promo-bar mt-4">Free Delivery on Orders Over $50 | Same-Day Delivery Available</div>
 
   <div class="container">
+    <section class="subscription-banner">
+      <div>
+        <div class="subscription-title">Biweekly Essentials Subscription</div>
+        <p class="subscription-text">All products x2, billed every 2 weeks. Perfect for household staples.</p>
+      </div>
+      <div>
+        <% 
+          const subStatus = subscription && (subscription.status || '').toLowerCase();
+          const isSubscribed = subscription && subStatus !== 'canceled' && subStatus !== 'cancelled';
+        %>
+        <% if (user) { %>
+          <% if (isSubscribed) { %>
+            <button class="btn btn-success" id="stripeSubscriptionHomeBtn" disabled>Subscribed</button>
+          <% } else { %>
+            <button class="btn btn-success" id="stripeSubscriptionHomeBtn">Subscribe with Stripe</button>
+          <% } %>
+        <% } else { %>
+          <a class="btn btn-success" href="/login">Log in to subscribe</a>
+        <% } %>
+      </div>
+    </section>
+
     <section class="mt-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="section-title mb-0">Featured Products</div>
@@ -338,5 +385,33 @@
       </div>
     </section>
   </div>
+
+  <script>
+    const stripeSubscriptionHomeBtn = document.getElementById('stripeSubscriptionHomeBtn');
+    const isSubscribed = <%- JSON.stringify(Boolean(subscription && ((subscription.status || '').toLowerCase() !== 'canceled' && (subscription.status || '').toLowerCase() !== 'cancelled'))) %>;
+    if (stripeSubscriptionHomeBtn && !isSubscribed) {
+      stripeSubscriptionHomeBtn.addEventListener('click', async () => {
+        try {
+          const response = await fetch('/stripe/subscription/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+          });
+          const data = await response.json();
+          if (!response.ok || !data.url) {
+            alert(data.error || 'Unable to start Stripe Subscription.');
+            return;
+          }
+          const newTab = window.open(data.url, '_blank');
+          if (!newTab) {
+            window.location.href = data.url;
+          }
+        } catch (err) {
+          console.error('Stripe subscription error:', err);
+          alert('Unable to start Stripe Subscription.');
+        }
+      });
+    }
+  </script>
 </body>
 </html>
