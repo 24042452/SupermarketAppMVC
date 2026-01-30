@@ -137,6 +137,9 @@
   <!-- Main Content -->
   <div class="container my-5 px-3 page-wrapper">
     <% const formatDate = (dt) => { try { return new Date(dt).toLocaleDateString('en-GB'); } catch(e) { return dt; } }; %>
+    <% const providerKey = (order && order.payment_provider) ? String(order.payment_provider).toLowerCase() : ''; %>
+    <% const providerLabels = { paypal: 'PayPal', stripe: 'Stripe', netsqr: 'NETS QR', paynow: 'PayNow', card: 'Card' }; %>
+    <% const paymentLabel = providerLabels[providerKey] || (providerKey ? providerKey.charAt(0).toUpperCase() + providerKey.slice(1) : '&mdash;'); %>
     <h2 class="section-title text-center">Order #<%= order.id %></h2>
     <p class="section-subtitle text-center">Review your items, prices, and delivery status.</p>
 
@@ -173,8 +176,8 @@
             <small><%= statusLabel %></small>
           </div>
           <div>
-            <span>Ship To:</span><br>
-            <small><%= user && user.address ? user.address : '—' %></small>
+            <span>Payment Method:</span><br>
+            <small><%- paymentLabel %></small>
           </div>
         </div>
 
@@ -182,6 +185,12 @@
           <i class="bi bi-truck"></i>
           <%= statusLabel %>
         </p>
+        <% if (refundRequest) { %>
+          <p class="status-badge <%= refundRequest.status === 'approved' ? 'status-delivered' : refundRequest.status === 'denied' ? 'status-pending' : 'status-delivery' %>">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            Refund: <%= refundRequest.status %>
+          </p>
+        <% } %>
 
         <div class="product-list">
           <% order.items.forEach(item => { 
@@ -233,3 +242,9 @@
 
 </body>
 </html>
+
+
+
+
+
+

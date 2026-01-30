@@ -127,6 +127,7 @@ app.get('/checkout', orderController.showCheckout); // Display checkout page
 app.post('/checkout', orderController.processCheckout); // Process checkout POST
 app.post('/paypal/create-order', orderController.createPaypalOrder);
 app.post('/paypal/capture-order', orderController.capturePaypalOrder);
+app.get('/paypal/success', orderController.showPaypalSuccess);
 app.post('/nets-qr/request', NetsController.generateQrCode);
 app.post('/nets-qr/request-json', NetsController.generateQrCodeJson);
 app.post('/nets-qr/confirm', orderController.confirmNetsPayment);
@@ -146,6 +147,7 @@ app.post('/stripe/subscription/create', orderController.createStripeSubscription
 app.get('/stripe/subscription/success', orderController.handleStripeSubscriptionSuccess);
 app.get('/stripe/subscription/cancel', orderController.handleStripeSubscriptionCancel);
 app.get('/subscription', orderController.showSubscription);
+app.post('/subscription/cancel', orderController.cancelSubscription);
 
 // ===========================
 //       ORDER HISTORY

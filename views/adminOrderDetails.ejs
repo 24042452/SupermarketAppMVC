@@ -64,6 +64,10 @@
       <div class="alert alert-success"><%= success.join('<br>') %></div>
     <% } %>
 
+    <% const providerKey = (order && order.payment_provider) ? String(order.payment_provider).toLowerCase() : ''; %>
+    <% const providerLabels = { paypal: 'PayPal', stripe: 'Stripe', netsqr: 'NETS QR', paynow: 'PayNow', card: 'Card' }; %>
+    <% const paymentLabel = providerLabels[providerKey] || (providerKey ? providerKey.charAt(0).toUpperCase() + providerKey.slice(1) : '—'); %>
+
     <div class="card p-3 mb-3">
       <div class="row g-3 align-items-center">
         <div class="col-md-3">
@@ -90,6 +94,7 @@
         <div class="col-md-4 text-end">
           <div class="fw-bold h5 mb-0">$<%= Number(order.total).toFixed(2) %></div>
           <small class="text-muted">Total</small>
+          <div class="text-muted small mt-1">Payment: <%= paymentLabel %></div>
         </div>
       </div>
     </div>
@@ -100,7 +105,6 @@
         <div class="col-md-3"><small class="text-muted">Name</small><div><%= buyer.username || 'N/A' %></div></div>
         <div class="col-md-3"><small class="text-muted">Email</small><div><%= buyer.email || 'N/A' %></div></div>
         <div class="col-md-3"><small class="text-muted">Contact</small><div><%= buyer.contact || 'N/A' %></div></div>
-        <div class="col-md-3"><small class="text-muted">Address</small><div><%= buyer.address || 'N/A' %></div></div>
       </div>
     </div>
 

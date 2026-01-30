@@ -329,6 +329,11 @@ const capturePaypalOrder = async (req, res) => {
 const processCheckout = (req, res) => {
     const cart = req.session.cart;
     const user = req.session.user;
+    const paymentMethod = req.body && req.body.paymentMethod ? req.body.paymentMethod : '';
+    const isPaypal = paymentMethod === 'PayPal';
+    const normalizedItems = normalizeCartItems(cart || []);
+    const totals = calculateTotals(normalizedItems);
+    const paymentProvider = paymentMethod ? paymentMethod.toLowerCase() : '';
 
     if (!user) return res.redirect('/login');
     if (!cart || cart.length === 0) return res.redirect('/cart');
@@ -358,12 +363,34 @@ const processCheckout = (req, res) => {
                         if (errPay) console.error('Error saving PayPal payment info:', errPay);
                         req.session.paypalPayment = null;
                         req.flash('success', 'Order placed successfully.');
+                        if (isPaypal) {
+                            return res.redirect(`/paypal/success?orderId=${orderId}`);
+                        }
                         return res.redirect(`/orders/${orderId}/invoice`);
                     });
                     return;
                 }
-                req.flash('success', 'Order placed successfully.');
-                return res.redirect(`/orders/${orderId}/invoice`);
+                const finalizeRedirect = () => {
+                    req.flash('success', 'Order placed successfully.');
+                    if (isPaypal) {
+                        return res.redirect(`/paypal/success?orderId=${orderId}`);
+                    }
+                    return res.redirect(`/orders/${orderId}/invoice`);
+                };
+
+                if (paymentProvider && paymentProvider !== 'paypal' && paymentProvider !== 'stripe') {
+                    OrderModel.updatePaymentInfo(orderId, {
+                        provider: paymentProvider,
+                        paymentId: null,
+                        amount: totals.total
+                    }, (errPay) => {
+                        if (errPay) console.error('Error saving payment method:', errPay);
+                        return finalizeRedirect();
+                    });
+                    return;
+                }
+
+                return finalizeRedirect();
             });
         },
         (item, available) => {
@@ -602,6 +629,8 @@ const confirmNetsPayment = async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
     if (!cart.length) return res.status(400).json({ error: 'Cart is empty' });
 
+    const netsItems = normalizeCartItems(cart);
+    const netsTotals = calculateTotals(netsItems);
     const sessionPayment = req.session.netsPayment || {};
     const txnRetrievalRef = req.body?.txnRetrievalRef || sessionPayment.txnRetrievalRef;
     const courseInitId = req.body?.courseInitId || sessionPayment.courseInitId;
@@ -640,7 +669,14 @@ const confirmNetsPayment = async (req, res) => {
                         status: 'paid',
                         paidAt: Date.now()
                     };
-                    return res.json({ status: 'success', invoiceUrl: `/orders/${orderId}/invoice` });
+                    OrderModel.updatePaymentInfo(orderId, {
+                        provider: 'netsqr',
+                        paymentId: txnRetrievalRef || null,
+                        amount: netsTotals.total
+                    }, (errPay) => {
+                        if (errPay) console.error('Error saving NETS payment info:', errPay);
+                        return res.json({ status: 'success', invoiceUrl: `/orders/${orderId}/invoice` });
+                    });
                 });
             },
             (item, available) => {
@@ -794,6 +830,40 @@ const handleStripeSuccess = async (req, res) => {
 const handleStripeCancel = (req, res) => {
     req.flash('error', 'Stripe payment was cancelled.');
     return res.redirect('/checkout');
+};
+
+const showPaypalSuccess = (req, res) => {
+    const user = req.session.user;
+    const orderId = req.query.orderId;
+
+    if (!user) return res.redirect('/login');
+    if (!orderId) return res.redirect('/orders');
+
+    OrderModel.getOrderDetails(orderId, (err, rows) => {
+        if (err) {
+            console.error('Error loading PayPal success order:', err);
+            req.flash('error', 'Order not found.');
+            return res.redirect('/orders');
+        }
+
+        if (!rows || rows.length === 0) {
+            req.flash('error', 'Order not found.');
+            return res.redirect('/orders');
+        }
+
+        if (rows[0].userId && user.role !== 'admin' && user.role !== 'superadmin' && rows[0].userId !== user.id) {
+            req.flash('error', 'You cannot view this order.');
+            return res.redirect('/orders');
+        }
+
+        const resolvedOrderId = rows[0].orderId || orderId;
+        return res.render('paypalSuccess', {
+            user,
+            cart: req.session.cart || [],
+            orderId: resolvedOrderId,
+            invoiceUrl: `/orders/${resolvedOrderId}/invoice`
+        });
+    });
 };
 
 const showNetsQrPay = async (req, res) => {
@@ -1110,19 +1180,115 @@ const showSubscription = (req, res) => {
     const user = req.session.user;
     if (!user) return res.redirect('/login');
 
-    StripeSubscriptionModel.getByUserId(user.id, (err, rows) => {
+    StripeSubscriptionModel.getByUserId(user.id, async (err, rows) => {
         if (err) {
             console.error('Error loading subscription:', err);
             return res.status(500).send('Error loading subscription');
         }
 
         const subscription = rows && rows[0] ? rows[0] : null;
+        let subscriptionInfo = null;
+
+        if (subscription && subscription.stripe_subscription_id) {
+            const stripe = getStripeClient();
+            if (stripe) {
+                try {
+                    const stripeSub = await stripe.subscriptions.retrieve(
+                        subscription.stripe_subscription_id,
+                        { expand: ['latest_invoice', 'latest_invoice.lines'] }
+                    );
+                    const items = stripeSub?.items?.data || [];
+                    const amountCents = items.reduce((sum, item) => {
+                        const unit = Number(item.price?.unit_amount || 0);
+                        const qty = Number(item.quantity || 1);
+                        return sum + unit * qty;
+                    }, 0);
+                    const currency = (stripeSub?.currency || items[0]?.price?.currency || 'sgd').toUpperCase();
+                    const fallbackPeriodEnd = stripeSub?.latest_invoice?.lines?.data?.[0]?.period?.end;
+                    const nextBillingEpoch = stripeSub?.current_period_end || fallbackPeriodEnd || null;
+                    const nextBillingDate = nextBillingEpoch ? new Date(nextBillingEpoch * 1000) : null;
+                    const subscriptionName = 'Biweekly Essentials Subscription';
+                    const latestInvoice = stripeSub?.latest_invoice || null;
+                    const lastInvoiceId = latestInvoice?.id || subscription.last_invoice_id || null;
+                    const lastInvoiceDate = latestInvoice?.created ? new Date(latestInvoice.created * 1000) : null;
+                    const cancelAtPeriodEnd = Boolean(stripeSub?.cancel_at_period_end);
+                    const cancelAtDate = stripeSub?.cancel_at ? new Date(stripeSub.cancel_at * 1000) : null;
+                    const status = stripeSub?.status || subscription.status || 'active';
+
+                    subscriptionInfo = {
+                        name: subscriptionName,
+                        amountCents,
+                        currency,
+                        nextBillingDate,
+                        lastInvoiceId,
+                        lastInvoiceDate,
+                        cancelAtPeriodEnd,
+                        cancelAtDate,
+                        status
+                    };
+                } catch (stripeErr) {
+                    console.error('Error retrieving Stripe subscription:', stripeErr);
+                }
+            }
+        }
 
         res.render('subscription', {
             user,
             cart: req.session.cart || [],
-            subscription
+            subscription,
+            subscriptionInfo
         });
+    });
+};
+
+const cancelSubscription = async (req, res) => {
+    const user = req.session.user;
+    if (!user) return res.redirect('/login');
+
+    StripeSubscriptionModel.getByUserId(user.id, async (err, rows) => {
+        if (err) {
+            console.error('Error loading subscription for cancel:', err);
+            req.flash('error', 'Unable to load subscription.');
+            return res.redirect('/subscription');
+        }
+
+        const subscription = rows && rows[0] ? rows[0] : null;
+        if (!subscription || !subscription.stripe_subscription_id) {
+            req.flash('error', 'Subscription not found.');
+            return res.redirect('/subscription');
+        }
+
+        const stripe = getStripeClient();
+        if (!stripe) {
+            req.flash('error', 'Stripe is not configured.');
+            return res.redirect('/subscription');
+        }
+
+        try {
+            const stripeSub = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+            if (stripeSub?.status !== 'active') {
+                req.flash('error', 'Only active subscriptions can be cancelled.');
+                return res.redirect('/subscription');
+            }
+            if (stripeSub?.cancel_at_period_end) {
+                req.flash('success', 'Your subscription is already set to cancel at period end.');
+                return res.redirect('/subscription');
+            }
+
+            await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+                cancel_at_period_end: true
+            });
+
+            StripeSubscriptionModel.updateStatus(subscription.stripe_subscription_id, 'cancel_at_period_end', (updateErr) => {
+                if (updateErr) console.error('Error updating subscription status:', updateErr);
+                req.flash('success', 'Your subscription will cancel at the end of the billing period.');
+                return res.redirect('/subscription');
+            });
+        } catch (cancelErr) {
+            console.error('Error cancelling subscription:', cancelErr);
+            req.flash('error', 'Failed to cancel subscription.');
+            return res.redirect('/subscription');
+        }
     });
 };
 
@@ -1204,10 +1370,12 @@ module.exports = {
     createStripeCheckoutSession,
     handleStripeSuccess,
     handleStripeCancel,
+    showPaypalSuccess,
     createStripeSubscriptionSession,
     handleStripeSubscriptionSuccess,
     handleStripeSubscriptionCancel,
     handleStripeWebhook,
     showSubscription,
+    cancelSubscription,
     requestRefund
 };

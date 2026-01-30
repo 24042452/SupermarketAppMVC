@@ -197,6 +197,7 @@ const showOrderDetail = (req, res) => {
             total: rows[0].total,
             order_date: rows[0].order_date,
             status: rows[0].status,
+            payment_provider: rows[0].payment_provider,
             userId: rows[0].userId,
             items: []
         };

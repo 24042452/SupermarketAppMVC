@@ -83,53 +83,119 @@
   <%- include('partials/navbar', { user: user, cart: cart }) %>
 
   <div class="page">
+    <% 
+      const formatDate = (dt) => { try { return dt ? new Date(dt).toLocaleDateString('en-GB') : 'N/A'; } catch (e) { return 'N/A'; } };
+      const planName = 'Biweekly Essentials Subscription';
+      const amountCents = subscriptionInfo && subscriptionInfo.amountCents ? subscriptionInfo.amountCents : 0;
+      const currency = subscriptionInfo && subscriptionInfo.currency ? subscriptionInfo.currency : 'SGD';
+      const currencyPrefix = currency === 'SGD' ? '$' : `${currency} `;
+      const billingAmount = amountCents ? `${currencyPrefix}${(amountCents / 100).toFixed(2)}` : 'N/A';
+      const monthlyAmount = amountCents ? `${currencyPrefix}${((amountCents * 26) / 12 / 100).toFixed(2)}` : 'N/A';
+      const nextBilling = (subscriptionInfo && subscriptionInfo.nextBillingDate) ? formatDate(subscriptionInfo.nextBillingDate) : 'N/A';
+      const lastInvoiceId = (subscriptionInfo && subscriptionInfo.lastInvoiceId) ? subscriptionInfo.lastInvoiceId : (subscription && subscription.last_invoice_id ? subscription.last_invoice_id : 'N/A');
+      const lastInvoiceDate = (subscriptionInfo && subscriptionInfo.lastInvoiceDate) ? formatDate(subscriptionInfo.lastInvoiceDate) : 'N/A';
+      const status = ((subscriptionInfo && subscriptionInfo.status) || (subscription && subscription.status) || 'active').toLowerCase();
+      const cancelAtPeriodEnd = Boolean(subscriptionInfo && subscriptionInfo.cancelAtPeriodEnd);
+      const canCancel = status === 'active' && !cancelAtPeriodEnd;
+    %>
     <div class="header">
       <div>
         <div class="title">My Subscription</div>
-        <div class="muted">Biweekly Essentials Box (all products x2)</div>
+        <div class="muted"><%= planName %></div>
       </div>
       <% if (subscription) { 
-           const status = (subscription.status || 'active').toLowerCase();
            let pillClass = 'pill-active';
            if (status === 'past_due') pillClass = 'pill-past_due';
            if (status === 'canceled' || status === 'cancelled') pillClass = 'pill-cancelled';
+           if (cancelAtPeriodEnd) pillClass = 'pill-past_due';
       %>
         <span class="pill <%= pillClass %>">
           <i class="bi bi-stars"></i>
-          <%= status %>
+          <%= cancelAtPeriodEnd ? 'canceling' : status %>
         </span>
       <% } %>
     </div>
 
     <% if (!subscription) { %>
       <div class="text-center py-4">
-        <p class="muted mb-3">You don’t have an active subscription yet.</p>
+        <p class="muted mb-3">You do not have an active subscription yet.</p>
         <a href="/checkout" class="btn btn-cta">Subscribe with Stripe</a>
       </div>
     <% } else { %>
       <div class="info-grid">
+        <div class="info-card">
+          <h6>Plan Name</h6>
+          <div class="muted"><%= planName %></div>
+        </div>
+        <div class="info-card">
+          <h6>Billing (Monthly)</h6>
+          <div class="muted"><%= monthlyAmount %></div>
+          <div class="muted small">Based on every 2 weeks: <%= billingAmount %></div>
+        </div>
+        <div class="info-card">
+          <h6>Next Billing Date</h6>
+          <div class="muted"><%= nextBilling %></div>
+        </div>
         <div class="info-card">
           <h6>Subscription ID</h6>
           <div class="muted"><%= subscription.stripe_subscription_id %></div>
         </div>
         <div class="info-card">
           <h6>Customer ID</h6>
-          <div class="muted"><%= subscription.stripe_customer_id || '—' %></div>
+          <div class="muted"><%= subscription.stripe_customer_id || 'N/A' %></div>
         </div>
         <div class="info-card">
           <h6>Last Invoice</h6>
-          <div class="muted"><%= subscription.last_invoice_id || '—' %></div>
+          <div class="muted"><%= lastInvoiceId %></div>
+          <div class="muted small">Date: <%= lastInvoiceDate %></div>
         </div>
         <div class="info-card">
           <h6>Status</h6>
           <div class="muted"><%= subscription.status || 'active' %></div>
         </div>
       </div>
+      <% if (subscriptionInfo && subscriptionInfo.cancelAtPeriodEnd) { %>
+        <div class="mt-3 text-muted small">
+          Cancels at period end: <%= subscriptionInfo.cancelAtDate ? formatDate(subscriptionInfo.cancelAtDate) : 'N/A' %>
+        </div>
+      <% } %>
       <div class="mt-4 d-flex justify-content-end gap-2">
         <a href="/orders" class="btn btn-outline-secondary">View Orders</a>
-        <a href="/checkout" class="btn btn-cta">Manage Subscription</a>
+        <% if (canCancel) { %>
+          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelSubscriptionModal">
+            Remove Subscription
+          </button>
+        <% } else { %>
+          <button type="button" class="btn btn-danger" disabled>
+            Cancellation scheduled
+          </button>
+        <% } %>
       </div>
     <% } %>
   </div>
+
+  <% if (subscription && canCancel) { %>
+    <div class="modal fade" id="cancelSubscriptionModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Cancel subscription?</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Your subscription will remain active until the end of the current billing period. You can resubscribe anytime.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep subscription</button>
+            <form action="/subscription/cancel" method="POST">
+              <button type="submit" class="btn btn-danger">Confirm cancel</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

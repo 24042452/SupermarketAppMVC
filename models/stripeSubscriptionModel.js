@@ -48,6 +48,14 @@ const updateLastInvoice = (subscriptionId, invoiceId, status, callback) => {
     });
 };
 
+const updateStatus = (subscriptionId, status, callback) => {
+    ensureTable((err) => {
+        if (err) return callback(err);
+        const sql = 'UPDATE stripe_subscriptions SET status = ? WHERE stripe_subscription_id = ?';
+        db.query(sql, [status || 'active', subscriptionId], callback);
+    });
+};
+
 const getByUserId = (userId, callback) => {
     ensureTable((err) => {
         if (err) return callback(err);
@@ -60,5 +68,6 @@ module.exports = {
     upsertSubscription,
     getBySubscriptionId,
     updateLastInvoice,
+    updateStatus,
     getByUserId
 };
