@@ -18,6 +18,9 @@ const UserController = require('./controllers/userController');
 const orderController = require('./controllers/orderController');
 const AdminController = require('./controllers/adminController');
 const NetsController = require('./services/nets');
+const paypalController = require('./controllers/paypalController');
+const netsController = require('./controllers/netsController');
+const stripeController = require('./controllers/stripeController');
 
 // Middleware
 const { checkAuthenticated, checkAdmin } = require('./middlewares/middleware');
@@ -26,7 +29,7 @@ const { checkAuthenticated, checkAdmin } = require('./middlewares/middleware');
 app.set('view engine', 'ejs');
 
 // Stripe webhook needs raw body
-app.post('/stripe/webhook', express.raw({ type: 'application/json' }), orderController.handleStripeWebhook);
+app.post('/stripe/webhook', express.raw({ type: 'application/json' }), stripeController.handleStripeWebhook);
 
 // Static files & form parsing
 app.use(express.static('public'));
@@ -125,13 +128,13 @@ app.post('/cart/clear', orderController.clearCart);
 // ===========================
 app.get('/checkout', orderController.showCheckout); // Display checkout page
 app.post('/checkout', orderController.processCheckout); // Process checkout POST
-app.post('/paypal/create-order', orderController.createPaypalOrder);
-app.post('/paypal/capture-order', orderController.capturePaypalOrder);
-app.get('/paypal/success', orderController.showPaypalSuccess);
+app.post('/paypal/create-order', paypalController.createPaypalOrder);
+app.post('/paypal/capture-order', paypalController.capturePaypalOrder);
+app.get('/paypal/success', paypalController.showPaypalSuccess);
 app.post('/nets-qr/request', NetsController.generateQrCode);
 app.post('/nets-qr/request-json', NetsController.generateQrCodeJson);
-app.post('/nets-qr/confirm', orderController.confirmNetsPayment);
-app.get('/nets-qr/pay', orderController.showNetsQrPay);
+app.post('/nets-qr/confirm', netsController.confirmNetsPayment);
+app.get('/nets-qr/pay', netsController.showNetsQrPay);
 app.get('/nets-qr/fail', (req, res) => {
     res.render('netsQrFail', {
         title: 'Error',
@@ -140,14 +143,14 @@ app.get('/nets-qr/fail', (req, res) => {
         errorMsg: 'Transaction failed. Please try again.'
     });
 });
-app.post('/stripe/create-session', orderController.createStripeCheckoutSession);
-app.get('/stripe/success', orderController.handleStripeSuccess);
-app.get('/stripe/cancel', orderController.handleStripeCancel);
-app.post('/stripe/subscription/create', orderController.createStripeSubscriptionSession);
-app.get('/stripe/subscription/success', orderController.handleStripeSubscriptionSuccess);
-app.get('/stripe/subscription/cancel', orderController.handleStripeSubscriptionCancel);
-app.get('/subscription', orderController.showSubscription);
-app.post('/subscription/cancel', orderController.cancelSubscription);
+app.post('/stripe/create-session', stripeController.createStripeCheckoutSession);
+app.get('/stripe/success', stripeController.handleStripeSuccess);
+app.get('/stripe/cancel', stripeController.handleStripeCancel);
+app.post('/stripe/subscription/create', stripeController.createStripeSubscriptionSession);
+app.get('/stripe/subscription/success', stripeController.handleStripeSubscriptionSuccess);
+app.get('/stripe/subscription/cancel', stripeController.handleStripeSubscriptionCancel);
+app.get('/subscription', stripeController.showSubscription);
+app.post('/subscription/cancel', stripeController.cancelSubscription);
 
 // ===========================
 //       ORDER HISTORY
